@@ -1,0 +1,24 @@
+{
+  "name": "what_is_react",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/winesf/what_is_react.git"
+  },
+  "author": "winesf@bk.ru",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/winesf/what_is_react/issues"
+  },
+  "homepage": "https://github.com/winesf/what_is_react#readme",
+  "devDependencies": {
+    "eslint": "^7.20.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1"
+  }
+}

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="root">
+    <script>
+      const state = {
+        date:new Date(),
+        cards: [
+          {
+            id: 1,
+            name: 'Apple',
+            description: 'Description',
+            price: 10,
+            img: "https://images.freeimages.com/images/small-previews/845/green-apple-1320430.jpg"
+          },
+          {
+            id: 2,
+            name: 'Orange',
+            description: 'Description',
+            price: 20,
+            img: "https://ic.pics.livejournal.com/photo_by_sam/31369462/144811/144811_original.jpg",
+          },
+        ],
+      }
+
+
+      function App({ state }) {
+        const app = document.createElement('div')
+        app.className = 'app'
+        app.append(Header())
+        app.append(Clock({
+          time: state.date,
+        }))
+        app.append(Cards({cards: state.cards}))
+        return app
+      }
+
+
+
+      function Logo () {
+          const logo = document.createElement('img');
+          logo.classList.add('logo')
+          logo.src = 'img/logo.png'
+          logo.alt = 'логотип'
+          logo.width = 150
+          logo.height = 75
+          return logo
+        }
+      function Nav() {
+        const nav = document.createElement('nav')
+        nav.className = "header__nav"
+        const navList = document.createElement('ul')
+        navList.className = "nav__list"
+        const navItem = document.createElement('li')
+        navItem.appendChild(document.createElement('a'))
+        navItem.className = "nav__item"
+
+        navList.append(navItem);
+        nav.append(navList);
+
+        return nav
+        }
+
+      function Header () {
+        const header = document.createElement('header')
+        header.className = 'header'
+        header.append(Logo())
+        header.append(Nav())
+        return header
+      }
+
+
+      function Clock ({time}) {
+        const clock = document.createElement('div')
+        clock.className = 'clock'
+        // clock.onload = showTime
+        clock.id = 'MyClockDisplay'
+        clock.innerText = time.toLocaleTimeString()
+        return clock
+      }
+
+        function Cards ({ cards }) {
+        const list = document.createElement('div')
+        list.className = 'cards'
+
+        cards.forEach((card) => {
+          list.append(Card({card}))
+            })
+          return list
+        }
+
+        function Card ({card}) {
+          const node = document.createElement('article')
+          node.className = 'card'
+
+          const image = document.createElement('div')
+          image.className = 'image'
+          const blockImage = document.createElement('img')
+          blockImage.src = card.img
+          blockImage.alt = card.name
+          image.append(blockImage)
+          node.append(image)
+
+
+          const content = document.createElement('div')
+          content.className = 'content'
+
+          const price = document.createElement('div')
+          price.className = 'price'
+          price.innerText = card.price
+
+          const name = document.createElement('h1')
+          name.innerText = card.name
+
+          const description = document.createElement('p')
+          description.innerText = card.description
+          content.append(price)
+          content.append(name)
+          content.append(description)
+          node.append(content)
+          return node
+        }
+
+
+
+      // const newDom = App({ state })
+      // const realDomRoot = document.getElementById('root')
+
+      render(App({ state }),
+        document.getElementById('root')
+      )
+
+      function render(newDom, realDomRoot) {
+        realDomRoot.append(newDom)
+      }
+
+
+
+    //
+        function showTime(){
+          var h = state.date.getHours(); // 0 - 23
+          var m = state.date.getMinutes(); // 0 - 59
+          var s = state.date.getSeconds(); // 0 - 59
+          var session = "AM";
+
+          if(h == 0){
+            h = 12;
+          }
+
+          if(h > 12){
+            h = h - 12;
+            session = "PM";
+          }
+
+          h = (h < 10) ? "0" + h : h;
+          m = (m < 10) ? "0" + m : m;
+          s = (s < 10) ? "0" + s : s;
+
+          var time = h + ":" + m + ":" + s + " " + session;
+          document.getElementById("MyClockDisplay").innerText = time;
+          document.getElementById("MyClockDisplay").textContent = time;
+
+          setTimeout(showTime, 1000);
+
+        }
+
+        showTime();
+    </script>
+</div>
+</body>
+</html>
