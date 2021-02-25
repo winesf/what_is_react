@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!--    <div class="app">-->
+<!--        <header class="header">-->
+<!--            <img class="header__logo" src="img/logo.png" alt="Логотип" width="150px" height="70px">-->
+<!--            <nav class="header__nav">-->
+<!--                <ul>-->
+<!--                    <li><a href="#">About Me</a></li>-->
+<!--                    <li><a href="#">Articles on HTML5 & CSS3</a>-->
+<!--                        <ul id="submenu">-->
+<!--                            <li><a href="">Difference between SVG vs. Canvas</a></li>-->
+<!--                        </ul>-->
+<!--                    </li>-->
+<!--                    <li><a href="#">News</a></li>-->
+<!--                    <li><a href="#">Contact Us</a></li>-->
+<!--                </ul>-->
+<!--            </nav>-->
+<!--        </header>-->
+<!--    </div>-->
+<!--    <div id="MyClockDisplay" class="clock" onload="showTime()">-->
+
+<!--    </div>-->
+<!--    <div class="cards">-->
+<!--       <article class="card">-->
+<!--           <div class="image">-->
+<!--               <img src="https://images.freeimages.com/images/small-previews/845/green-apple-1320430.jpg" alt="яблоко">-->
+<!--           </div>-->
+<!--           <div class="content">-->
+<!--               <div class="price">16</div>-->
+<!--               <h1>Apple</h1>-->
+<!--               <p>Desription</p>-->
+<!--           </div>-->
+<!--       </article>-->
+
+<!--        <article class="card">-->
+<!--            <div class="image">-->
+<!--                <img src="https://ic.pics.livejournal.com/photo_by_sam/31369462/144811/144811_original.jpg" alt="яблоко">-->
+<!--            </div>-->
+<!--            <div class="content">-->
+<!--                <div class="price">16</div>-->
+<!--                <h1>Apple</h1>-->
+<!--                <p>Desription</p>-->
+<!--            </div>-->
+<!--        </article>-->
+<!--        <article class="card is-loading">-->
+<!--                <div class="image"></div>-->
+<!--                <div class="content">-->
+<!--                    <h2></h2>-->
+<!--                    <p></p>-->
+<!--                </div>-->
+<!--        </article>-->
+<!--    </div>-->
+<!--    <script src="script.js"></script>-->
+<div id="root">
+    <script>
+      const state = {
+        date:new Date(),
+        cards: [
+          {
+            id: 1,
+            name: 'Apple',
+            description: 'Description',
+            price: 10,
+            img: "https://images.freeimages.com/images/small-previews/845/green-apple-1320430.jpg"
+          },
+          {
+            id: 2,
+            name: 'Orange',
+            description: 'Description',
+            price: 20,
+            img: "https://ic.pics.livejournal.com/photo_by_sam/31369462/144811/144811_original.jpg",
+          },
+        ],
+      }
+        const app = document.createElement('div')
+        app.className = 'app'
+
+        const logo = document.createElement('img');
+        logo.classList.add('logo')
+        logo.src = 'img/logo.png'
+        logo.alt = 'логотип'
+        logo.width = 150
+        logo.height = 75
+
+        const header = document.createElement('header')
+        header.className = 'header'
+
+        const nav = document.createElement('nav')
+        nav.className = "header__nav"
+        const navList = document.createElement('ul')
+        navList.className = "nav__list"
+        const navItem = document.createElement('li')
+        navItem.appendChild(document.createElement('a'))
+        navItem.className = "nav__item"
+
+
+        navList.append(navItem);
+        nav.append(navList);
+
+        header.append(logo)
+        header.append(nav)
+
+        const domRoot = document.getElementById('root')
+
+        const clock = document.createElement('div')
+        clock.className = 'clock'
+        clock.onload = showTime
+        clock.id = 'MyClockDisplay'
+
+        const cards = document.createElement('div')
+        cards.className = 'cards'
+
+        state.cards.forEach((card) => {
+          const node = document.createElement('article')
+          node.className = 'card'
+
+          const image = document.createElement('div')
+          image.className = 'image'
+          const blockImage = document.createElement('img')
+          blockImage.src = card.img
+          blockImage.alt = card.name
+          image.append(blockImage)
+          node.append(image)
+
+
+          const content = document.createElement('div')
+          content.className = 'content'
+
+          const price = document.createElement('div')
+          price.className = 'price'
+          price.innerText = card.price
+
+          const name = document.createElement('h1')
+          name.innerText = card.name
+
+          const description = document.createElement('p')
+          description.innerText = card.description
+          content.append(price)
+          content.append(name)
+          content.append(description)
+          node.append(content)
+
+          cards.append(node)
+        })
+
+
+
+        app.append(header)
+        app.append(clock)
+        app.append(cards)
+
+        domRoot.append(app)
+
+
+    //
+        function showTime(){
+          var h = state.date.getHours(); // 0 - 23
+          var m = state.date.getMinutes(); // 0 - 59
+          var s = state.date.getSeconds(); // 0 - 59
+          var session = "AM";
+
+          if(h == 0){
+            h = 12;
+          }
+
+          if(h > 12){
+            h = h - 12;
+            session = "PM";
+          }
+
+          h = (h < 10) ? "0" + h : h;
+          m = (m < 10) ? "0" + m : m;
+          s = (s < 10) ? "0" + s : s;
+
+          var time = h + ":" + m + ":" + s + " " + session;
+          document.getElementById("MyClockDisplay").innerText = time;
+          document.getElementById("MyClockDisplay").textContent = time;
+
+          setTimeout(showTime, 1000);
+
+        }
+
+        showTime();
+    </script>
+</div>
+</body>
+</html>
