@@ -62,137 +62,240 @@
 
 
       function App({ state }) {
-        const app = document.createElement('div')
-        app.className = 'app'
-        app.append(Header(state.menu))
-        app.append(Clock({
-          time: state.date,
-        }))
-        app.append(Cards({cards: state.cards}))
-        return app
+        return {
+          type: 'div',
+          props: {
+            className: 'app',
+            children: [
+              {
+                type: Header,
+                props: {menu: state.menu}
+              },
+              {
+                type: Clock,
+                props: {
+                  time: state.date
+                }
+              },
+              {
+                type: Cards,
+                props: {cards: state.cards}
+              },
+              {
+                type: 'h1',
+                props: {
+                  className: 'testnode'
+                },
+                children: [
+                  'End Page'
+                ]
+              }
+            ]
+          }
+        }
       }
 
 
 
       function Logo () {
-          const logo = document.createElement('img');
-          logo.classList.add('logo')
-          logo.src = 'img/logo.png'
-          logo.alt = 'логотип'
-          logo.width = 150
-          logo.height = 75
-          return logo
+        return {
+          type: 'img',
+          props: {
+            className: 'logo',
+            src: 'img/logo.png',
+            alt: 'логотип',
+            width: 150,
+            height: 75
+          }
         }
+       }
       function Nav(menu) {
-        const nav = document.createElement('nav')
-        nav.className = "header__nav"
-        const navList = document.createElement('ul')
-        navList.className = "nav__list"
+        return {
+          type: 'nav',
+          props: {
+            className: 'header__nav',
+            children: [
+              {
+                type: 'ul',
+                props: {
+                  className: "nav__list"
+                }
+              }
+            ]
+          }
+        }
 
-        Object.entries(menu).forEach(([id, name], index) => {
-          const navItem = document.createElement('li')
-          navItem.className = "nav__item"
-
-          const navLink = document.createElement('a')
-          navLink.innerText = name
-          navLink.href = id
-
-          navItem.append(navLink)
-          navList.append(navItem)
-        })
-        nav.append(navList);
-
-        return nav
+        // Object.entries(menu).forEach(([id, name], index) => {
+        //   const navItem = document.createElement('li')
+        //   navItem.className = "nav__item"
+        //
+        //   const navLink = document.createElement('a')
+        //   navLink.innerText = name
+        //   navLink.href = id
+        //
+        //   navItem.append(navLink)
+        //   navList.append(navItem)
+        // })
+        // nav.append(navList);
+        //
+        // return nav
         }
 
       function Header (menu) {
-        const header = document.createElement('header')
-        header.className = 'header'
-        header.append(Logo())
-        header.append(Nav(menu))
-        return header
+        return {
+          type: 'header',
+          props: {
+            className: 'header',
+            children: [
+              {
+                type: Logo
+              },
+              {
+                type: Nav,
+                props: {
+                  children: [
+                    menu
+                  ]
+                }
+              }
+            ]
+          }
+        }
       }
+
+      // function Block (props) {
+      //   return {
+      //     type: 'div',
+      //     props: {
+      //       className: 'block',
+      //       children: props.children
+      //     },
+      //   }
+      // }
 
 
       function Clock ({time}) {
-        const clock = document.createElement('div')
-        clock.className = 'clock'
-        // clock.onload = showTime
-
-        const value = document.createElement('span')
-        value.className = 'value'
-        value.innerText = time.toLocaleTimeString()
-
-       clock.append(value)
-
-        const icon = document.createElement('span')
-        if (time.getHours() >= 7 && time.getHours() <= 21) {
-          icon.className = 'icon day'
-        } else {
-          icon.className = 'icon night'
+       const isDay = time.getHours() >=7 && time.getHours() <= 21
+        return {
+         type: 'div',
+          props: {
+           className: 'clock',
+            children: [
+              {
+                type: 'span',
+                props: {
+                  className: 'value',
+                  children: [
+                    time.toLocaleString()
+                  ]
+                }
+              },
+              {
+                type: 'span',
+                props: {
+                  className: isDay ? 'icon day' : 'icon night',
+                }
+              }
+            ]
+          }
         }
-
-        clock.append(icon)
-
-        return clock
       }
 
+      function Loading () {
+        return {
+            type: 'div',
+            props: {
+              className: 'is-loading',
+              id: 0,
+              name: '',
+              description: '',
+              price: '',
+              img: '',
+            }
+        }
+      }
         function Cards ({ cards }) {
         if (cards === null) {
-            const card =
-              {
-                id: 1,
-                name: '',
-                description: '',
-                price: '',
-                img: '',
-                class: 'is-loading'
-              }
-         return Card({card});
+         return {
+           type: Loading,
+           props: {}
+         }
         }
-        const list = document.createElement('div')
-        list.className = 'cards'
 
-        cards.forEach((card) => {
-          list.append(Card({card}))
-            })
-          return list
+        return  {
+          type: 'div',
+          props: {
+            className: 'cards',
+            children: cards.map((card) => ({
+              type: Card,
+              props: { card }
+            }))
+          }
         }
+       }
 
         function Card ({card}) {
+        return {
+          type: 'article',
+          key: card.id,
+          props: {
+            className: 'card',
+            children: [
+              {
+                type: 'div',
+                props: {
+                  className:'image',
+                  children: [
+                    {
+                      type: 'img',
+                      props: {
+                        src: card.img,
+                        alt: card.name
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                type: 'div',
+                props: {
+                  className: 'content',
+                  children: [
+                    {
+                      type: 'div',
+                      props: {
+                        className: 'price',
+                        children: [
+                          card.price
+                        ]
+                      }
+                    },
+                    {
+                     type: 'h1',
+                      props: {
+                       children: [
+                         card.name
+                       ]
+                      }
+                    },
+                    {
+                     type: 'p' ,
+                      props: {
+                       children: [
+                         card.description
+                       ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
 
-          const node = document.createElement('article')
-          node.className = 'card'
-          node.dataset.key = card.id   //Для более четкого обновления элеентов
-          if (card.class != undefined)
-            node.classList.add(card.class)
+          // if (card.class != undefined)
+          //   node.classList.add(card.class)
 
-          const image = document.createElement('div')
-          image.className = 'image'
-          const blockImage = document.createElement('img')
-          blockImage.src = card.img
-          blockImage.alt = card.name
-          image.append(blockImage)
-          node.append(image)
-
-
-          const content = document.createElement('div')
-          content.className = 'content'
-
-          const price = document.createElement('div')
-          price.className = 'price'
-          price.innerText = card.price
-
-          const name = document.createElement('h1')
-          name.innerText = card.name
-
-          const description = document.createElement('p')
-          description.innerText = card.description
-          content.append(price)
-          content.append(name)
-          content.append(description)
-          node.append(content)
-          return node
         }
 
 
@@ -209,34 +312,64 @@
       }
 
       function render(virtualDom, realDomRoot) {
-        const virtualDomRoot = document.createElement(realDomRoot.tagName)
-        virtualDomRoot.id = 'root'
-        virtualDomRoot.append(virtualDom)
+        const evaluatedVirtualDom = evaluate(virtualDom);
+        const virtualDomRoot = {
+          type: realDomRoot.tagName.toLowerCase(),
+          props: {
+            id: realDomRoot.id,
+            ...realDomRoot.attributes,
+            children: [
+              evaluatedVirtualDom
+            ]
+          },
+        }
 
-        sync(virtualDom, realDomRoot)
+        sync(virtualDomRoot, realDomRoot)
+      }
+
+      function evaluate (virtualNode) {
+        if (typeof virtualNode !== 'object') {
+          return virtualNode
+        }
+        if (typeof virtualNode.type === 'function') {
+          return evaluate((virtualNode.type)(virtualNode.props))
+        }
+
+        const  props = virtualNode.props || {}
+        return {
+          ...virtualNode,
+          props: {
+            ...props,
+            children: Array.isArray(props.children) ? props.children.map(evaluate) : [evaluate(props.children)]
+          }
+        }
       }
 
       function sync (virtualNode, realNode) {
         //sync element
-            if (virtualNode.id !== realNode.id) {
-              realNode.id == virtualNode.id
-            }
-            if (virtualNode.className !== realNode.className) {
-              realNode.className = virtualNode.className
-            }
-            if (virtualNode.attributes) {
-              Array.from(virtualNode.attributes).forEach((attr) => {
-                realNode[attr.name] = attr.value
+            if (virtualNode.props) {
+              Object.entries(virtualNode.props).forEach(([name, value]) => {
+                if (name === 'children' && name === 'key') {
+                return
+                }
+
+                if (realNode[name] !== value) {
+                  realNode[name] = value
+                }
               })
             }
 
-            if (virtualNode.nodeValue !== realNode.nodeValue) {
-              realNode.nodeValue = virtualNode.nodeValue
+            if (virtualNode.key) {
+              realNode.dataset.key = virtualNode.key
+            }
+
+            if (typeof virtualNode !== 'object' && virtualNode !== realNode.nodeValue) {
+              realNode.nodeValue = virtualNode
             }
 
         //sync child nodes
 
-        const virtualChildren = virtualNode.childNodes
+        const virtualChildren = virtualNode.props ? virtualNode.props.children || [] : []
         const realChildren = realNode.childNodes
 
         for (let i = 0; i < virtualChildren.length || i < realChildren.length; i++) {
@@ -248,12 +381,12 @@
             realNode.remove(real)
           }
           // Update
-          if (virtual !== undefined && real !== undefined && virtual.tagName === real.tagName) {
+          if (virtual !== undefined && real !== undefined &&  (virtual.type || '') === (real.tagName || '').toLowerCase()) {
             // console.log("Update ноду")
             sync(virtual, real)
           }
           // Replace
-          if (virtual !== undefined && real !== undefined && virtual.tagName !== real.tagName) {
+          if (virtual !== undefined && real !== undefined && (virtual.type || '') !== (real.tagName || '').toLowerCase()) {
             // console.log("Replace ноду")
             const newReal = createRealNodeByVirtual(virtual);
             sync(virtual, newReal)
@@ -271,12 +404,10 @@
 
       function createRealNodeByVirtual(virtual) {
         let newReal
-        if (virtual.nodeType === Node.TEXT_NODE) {
-          newReal = document.createTextNode('')
-        } else {
-          newReal = document.createElement(virtual.tagName)
+        if (typeof  virtual !== 'object') {
+            return  document.createTextNode('')
         }
-        return newReal
+        return document.createElement(virtual.type)
       }
 // #################
       setInterval(() => {
@@ -286,7 +417,7 @@
           date: new Date()
         }
         renderView(state)
-      }, 5000)
+      }, 1000)
 
       api.get('/cards')
         .then((cards) => {
