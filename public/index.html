@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div id="root">
+<div id="root"></div>
     <script>
       const api = {
         get (url) {
@@ -41,11 +41,12 @@
           const match = /price-(\d+)/.exec(channel)
           if (match) {
             setInterval(() => {
+              console.log("смена цен")
               listener({
                 id: parseInt(match[1]),
                 price: Math.round((Math.random() * 10 + 30))
               })
-            }, 1000)
+            }, 11000)
           }
         }
       }
@@ -232,33 +233,59 @@
               realNode.nodeValue = virtualNode.nodeValue
             }
 
-            realNode.innerHTML = ''
         //sync child nodes
 
         const virtualChildren = virtualNode.childNodes
+        const realChildren = realNode.childNodes
 
-        for (let i = 0; i < virtualChildren.length; i++) {
+        for (let i = 0; i < virtualChildren.length || i < realChildren.length; i++) {
           const virtual = virtualChildren[i]
-
-          let newReal
-          if (virtual.nodeType === Node.TEXT_NODE) {
-            newReal = document.createTextNode('')
-          } else {
-            newReal = document.createElement(virtual.tagName)
+          const real = realChildren[i]
+          // Remove
+          if (virtual === undefined && real !== undefined) {
+            // console.log("Удалил ноду" + realNode)
+            realNode.remove(real)
           }
-
-          sync(virtual, newReal)
-          realNode.appendChild(newReal)
+          // Update
+          if (virtual !== undefined && real !== undefined && virtual.tagName === real.tagName) {
+            // console.log("Update ноду")
+            sync(virtual, real)
+          }
+          // Replace
+          if (virtual !== undefined && real !== undefined && virtual.tagName !== real.tagName) {
+            // console.log("Replace ноду")
+            const newReal = createRealNodeByVirtual(virtual);
+            sync(virtual, newReal)
+            realNode.replaceChild(newReal, real)
+          }
+          // Add elem
+          if (virtual !== undefined && real === undefined) {
+            // console.log(virtual + " ### " + real)
+            const newReal = createRealNodeByVirtual(virtual);
+            sync(virtual, newReal)
+            realNode.appendChild(newReal)
+          }
         }
+      }
+
+      function createRealNodeByVirtual(virtual) {
+        let newReal
+        if (virtual.nodeType === Node.TEXT_NODE) {
+          newReal = document.createTextNode('')
+        } else {
+          newReal = document.createElement(virtual.tagName)
+        }
+        return newReal
       }
 // #################
       setInterval(() => {
+        console.log("#CLOCK UPDATE")
         state = {
           ...state,
           date: new Date()
         }
         renderView(state)
-      }, 1000)
+      }, 5000)
 
       api.get('/cards')
         .then((cards) => {
@@ -334,6 +361,5 @@
         }
 
     </script>
-</div>
 </body>
 </html>
