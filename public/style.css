@@ -131,7 +131,7 @@ li:hover ul#submenu {
     position: absolute;
     top: 95%;
     left: 50%;
-    border: 1px solid red;
+    /*border: 1px solid red;*/
     transform: translateX(-50%) translateY(-50%);
     color: #17D4FE;
     font-size: 20px;
@@ -139,3 +139,15 @@ li:hover ul#submenu {
     letter-spacing: 7px;
 
 }
+
+.clock .icon {
+    padding: 0 10px;
+    border-radius: 50%;
+}
+
+.clock .icon.night {
+    background-color: grey;
+}
+.clock .icon.day {
+     background-color: yellow;
+ }
