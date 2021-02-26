@@ -8,31 +8,62 @@
 <body>
 <div id="root">
     <script>
-      const state = {
-        date:new Date(),
-        cards: [
-          {
-            id: 1,
-            name: 'Apple',
-            description: 'Description',
-            price: 10,
-            img: "https://images.freeimages.com/images/small-previews/845/green-apple-1320430.jpg"
-          },
-          {
-            id: 2,
-            name: 'Orange',
-            description: 'Description',
-            price: 20,
-            img: "https://ic.pics.livejournal.com/photo_by_sam/31369462/144811/144811_original.jpg",
-          },
-        ],
+      const api = {
+        get (url) {
+          switch (url) {
+            case '/cards':
+              return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                  resolve([
+                    {
+                      id: 1,
+                      name: 'Apple',
+                      description: 'Description',
+                      price: 10,
+                      img: "https://images.freeimages.com/images/small-previews/845/green-apple-1320430.jpg"
+                    },
+                    {
+                      id: 2,
+                      name: 'Orange',
+                      description: 'Description',
+                      price: 20,
+                      img: "https://ic.pics.livejournal.com/photo_by_sam/31369462/144811/144811_original.jpg",
+                    },
+                  ])
+                },3500)
+              })
+          }
+        }
+      }
+
+      const stream = {
+        subscribe(channel, listener) {
+          const match = /price-(\d+)/.exec(channel)
+          if (match) {
+            setInterval(() => {
+              listener({
+                id: parseInt(match[1]),
+                price: Math.round((Math.random() * 10 + 30))
+              })
+            }, 7000)
+          }
+        }
+      }
+      let state = {
+        menu: {
+          1: 'About',
+          2: 'Hello',
+          3: 'world',
+        },
+        date: new Date(),
+        cards: null
       }
 
 
       function App({ state }) {
         const app = document.createElement('div')
         app.className = 'app'
-        app.append(Header())
+        app.append(Header(state.menu))
         app.append(Clock({
           time: state.date,
         }))
@@ -51,26 +82,33 @@
           logo.height = 75
           return logo
         }
-      function Nav() {
+      function Nav(menu) {
         const nav = document.createElement('nav')
         nav.className = "header__nav"
         const navList = document.createElement('ul')
         navList.className = "nav__list"
-        const navItem = document.createElement('li')
-        navItem.appendChild(document.createElement('a'))
-        navItem.className = "nav__item"
 
-        navList.append(navItem);
+        Object.entries(menu).forEach(([id, name], index) => {
+          const navItem = document.createElement('li')
+          navItem.className = "nav__item"
+
+          const navLink = document.createElement('a')
+          navLink.innerText = name
+          navLink.href = id
+
+          navItem.append(navLink)
+          navList.append(navItem)
+        })
         nav.append(navList);
 
         return nav
         }
 
-      function Header () {
+      function Header (menu) {
         const header = document.createElement('header')
         header.className = 'header'
         header.append(Logo())
-        header.append(Nav())
+        header.append(Nav(menu))
         return header
       }
 
@@ -79,12 +117,38 @@
         const clock = document.createElement('div')
         clock.className = 'clock'
         // clock.onload = showTime
-        clock.id = 'MyClockDisplay'
-        clock.innerText = time.toLocaleTimeString()
+
+        const value = document.createElement('span')
+        value.className = 'value'
+        value.innerText = time.toLocaleTimeString()
+
+       clock.append(value)
+
+        const icon = document.createElement('span')
+        if (time.getHours() >= 7 && time.getHours() <= 21) {
+          icon.className = 'icon day'
+        } else {
+          icon.className = 'icon night'
+        }
+
+        clock.append(icon)
+
         return clock
       }
 
         function Cards ({ cards }) {
+        if (cards === null) {
+            const card =
+              {
+                id: 1,
+                name: '',
+                description: '',
+                price: '',
+                img: '',
+                class: 'is-loading'
+              }
+         return Card({card});
+        }
         const list = document.createElement('div')
         list.className = 'cards'
 
@@ -95,8 +159,11 @@
         }
 
         function Card ({card}) {
+
           const node = document.createElement('article')
           node.className = 'card'
+          if (card.class != undefined)
+            node.classList.add(card.class)
 
           const image = document.createElement('div')
           image.className = 'image'
@@ -127,17 +194,73 @@
         }
 
 
-
+// ##################
       // const newDom = App({ state })
       // const realDomRoot = document.getElementById('root')
+      renderView(state)
 
-      render(App({ state }),
-        document.getElementById('root')
-      )
+      function renderView(state) {
+        render(
+          App({state}),
+          document.getElementById('root')
+        )
+      }
 
       function render(newDom, realDomRoot) {
+        realDomRoot.innerHTML = ''
         realDomRoot.append(newDom)
       }
+// #################
+      setInterval(() => {
+        state = {
+          ...state,
+          date: new Date()
+        }
+        renderView(state)
+      }, 1000)
+
+      api.get('/cards')
+        .then((cards) => {
+          state = {
+            ...state,
+            cards
+          }
+          const onPrice = (data) => {
+            state = {
+              ...state,
+              cards: state.cards.map((card) => {
+                if (card.id === data.id) {
+                  return {
+                    ...card,
+                    price: data.price
+                  }
+                }
+                return card
+              })
+            }
+            renderView(state)
+          }
+
+          cards.forEach((card) => {
+            stream.subscribe(`price-${card.id}`, onPrice)
+          })
+
+        })
+        .catch((error) => {
+          console.log('Ошибка' + error);
+        })
+
+      // setInterval(() => {
+      //   state = {
+      //     ...state,
+      //     cards: state.cards.map((card) => {
+      //       return {
+      //         ...card,
+      //         price: Math.round((Math.random()* 10 + 30))
+      //       }
+      //     })
+      //   }
+      // }, 5000)
 
 
 
@@ -169,7 +292,6 @@
 
         }
 
-        showTime();
     </script>
 </div>
 </body>
