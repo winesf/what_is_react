@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div id="root">
+<div id="root"></div>
     <script>
       const api = {
         get (url) {
@@ -41,11 +41,12 @@
           const match = /price-(\d+)/.exec(channel)
           if (match) {
             setInterval(() => {
+              console.log("смена цен")
               listener({
                 id: parseInt(match[1]),
                 price: Math.round((Math.random() * 10 + 30))
               })
-            }, 7000)
+            }, 11000)
           }
         }
       }
@@ -162,6 +163,7 @@
 
           const node = document.createElement('article')
           node.className = 'card'
+          node.dataset.key = card.id   //Для более четкого обновления элеентов
           if (card.class != undefined)
             node.classList.add(card.class)
 
@@ -206,18 +208,85 @@
         )
       }
 
-      function render(newDom, realDomRoot) {
-        realDomRoot.innerHTML = ''
-        realDomRoot.append(newDom)
+      function render(virtualDom, realDomRoot) {
+        const virtualDomRoot = document.createElement(realDomRoot.tagName)
+        virtualDomRoot.id = 'root'
+        virtualDomRoot.append(virtualDom)
+
+        sync(virtualDom, realDomRoot)
+      }
+
+      function sync (virtualNode, realNode) {
+        //sync element
+            if (virtualNode.id !== realNode.id) {
+              realNode.id == virtualNode.id
+            }
+            if (virtualNode.className !== realNode.className) {
+              realNode.className = virtualNode.className
+            }
+            if (virtualNode.attributes) {
+              Array.from(virtualNode.attributes).forEach((attr) => {
+                realNode[attr.name] = attr.value
+              })
+            }
+
+            if (virtualNode.nodeValue !== realNode.nodeValue) {
+              realNode.nodeValue = virtualNode.nodeValue
+            }
+
+        //sync child nodes
+
+        const virtualChildren = virtualNode.childNodes
+        const realChildren = realNode.childNodes
+
+        for (let i = 0; i < virtualChildren.length || i < realChildren.length; i++) {
+          const virtual = virtualChildren[i]
+          const real = realChildren[i]
+          // Remove
+          if (virtual === undefined && real !== undefined) {
+            // console.log("Удалил ноду" + realNode)
+            realNode.remove(real)
+          }
+          // Update
+          if (virtual !== undefined && real !== undefined && virtual.tagName === real.tagName) {
+            // console.log("Update ноду")
+            sync(virtual, real)
+          }
+          // Replace
+          if (virtual !== undefined && real !== undefined && virtual.tagName !== real.tagName) {
+            // console.log("Replace ноду")
+            const newReal = createRealNodeByVirtual(virtual);
+            sync(virtual, newReal)
+            realNode.replaceChild(newReal, real)
+          }
+          // Add elem
+          if (virtual !== undefined && real === undefined) {
+            // console.log(virtual + " ### " + real)
+            const newReal = createRealNodeByVirtual(virtual);
+            sync(virtual, newReal)
+            realNode.appendChild(newReal)
+          }
+        }
+      }
+
+      function createRealNodeByVirtual(virtual) {
+        let newReal
+        if (virtual.nodeType === Node.TEXT_NODE) {
+          newReal = document.createTextNode('')
+        } else {
+          newReal = document.createElement(virtual.tagName)
+        }
+        return newReal
       }
 // #################
       setInterval(() => {
+        console.log("#CLOCK UPDATE")
         state = {
           ...state,
           date: new Date()
         }
         renderView(state)
-      }, 1000)
+      }, 5000)
 
       api.get('/cards')
         .then((cards) => {
@@ -293,6 +362,5 @@
         }
 
     </script>
-</div>
 </body>
 </html>
