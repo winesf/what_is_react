@@ -163,6 +163,7 @@
 
           const node = document.createElement('article')
           node.className = 'card'
+          node.dataset.key = card.id   //Для более четкого обновления элеентов
           if (card.class != undefined)
             node.classList.add(card.class)
 
