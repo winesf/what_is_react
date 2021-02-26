@@ -108,26 +108,35 @@
         }
        }
       function Nav(menu) {
+        return {
+          type: 'nav',
+          props: {
+            className: 'header__nav',
+            children: [
+              {
+                type: 'ul',
+                props: {
+                  className: "nav__list"
+                }
+              }
+            ]
+          }
+        }
 
-        const nav = document.createElement('nav')
-        nav.className = "header__nav"
-        const navList = document.createElement('ul')
-        navList.className = "nav__list"
-
-        Object.entries(menu).forEach(([id, name], index) => {
-          const navItem = document.createElement('li')
-          navItem.className = "nav__item"
-
-          const navLink = document.createElement('a')
-          navLink.innerText = name
-          navLink.href = id
-
-          navItem.append(navLink)
-          navList.append(navItem)
-        })
-        nav.append(navList);
-
-        return nav
+        // Object.entries(menu).forEach(([id, name], index) => {
+        //   const navItem = document.createElement('li')
+        //   navItem.className = "nav__item"
+        //
+        //   const navLink = document.createElement('a')
+        //   navLink.innerText = name
+        //   navLink.href = id
+        //
+        //   navItem.append(navLink)
+        //   navList.append(navItem)
+        // })
+        // nav.append(navList);
+        //
+        // return nav
         }
 
       function Header (menu) {
@@ -301,11 +310,37 @@
       }
 
       function render(virtualDom, realDomRoot) {
-        const virtualDomRoot = document.createElement(realDomRoot.tagName)
-        virtualDomRoot.id = 'root'
-        virtualDomRoot.append(virtualDom)
+        const evaluatedVirtualDom = evaluate(virtualDom);
+        const virtualDomRoot = {
+          type: realDomRoot.tagName.toLowerCase(),
+          props: {
+            id: realDomRoot.id,
+            ...realDomRoot.attributes,
+            children: [
+              evaluatedVirtualDom
+            ]
+          },
+        }
 
-        sync(virtualDom, realDomRoot)
+        sync(virtualDomRoot, realDomRoot)
+      }
+
+      function evaluate (virtualNode) {
+        if (typeof virtualNode !== 'object') {
+          return virtualNode
+        }
+        if (typeof virtualNode.type === 'function') {
+          return evaluate((virtualNode.type)(virtualNode.props))
+        }
+
+        const  props = virtualNode.props || {}
+        return {
+          ...virtualNode,
+          props: {
+            ...props,
+            children: Array.isArray(props.children) ? props.children.map(evaluate) : [evaluate(props.children)]
+          }
+        }
       }
 
       function sync (virtualNode, realNode) {
