@@ -65,31 +65,33 @@
         return {
           type: 'div',
           props: {
-            className: 'app'
-          },
-          children: [
-            {
-              type: Header,
-              props: { menu: state.menu}
-            },
-            {
-              type: Clock,
-              props: {time: state.time}
-            },
-            {
-              type: Cards,
-              props: {cards: state.cards}
-            },
-            {
-              type: 'h1',
-              props: {
-                className: 'testnode'
+            className: 'app',
+            children: [
+              {
+                type: Header,
+                props: {menu: state.menu}
               },
-              children: [
-                'End Page'
-              ]
-            }
-          ]
+              {
+                type: Clock,
+                props: {
+                  time: state.date
+                }
+              },
+              {
+                type: Cards,
+                props: {cards: state.cards}
+              },
+              {
+                type: 'h1',
+                props: {
+                  className: 'testnode'
+                },
+                children: [
+                  'End Page'
+                ]
+              }
+            ]
+          }
         }
       }
 
@@ -345,25 +347,29 @@
 
       function sync (virtualNode, realNode) {
         //sync element
-            if (virtualNode.id !== realNode.id) {
-              realNode.id == virtualNode.id
-            }
-            if (virtualNode.className !== realNode.className) {
-              realNode.className = virtualNode.className
-            }
-            if (virtualNode.attributes) {
-              Array.from(virtualNode.attributes).forEach((attr) => {
-                realNode[attr.name] = attr.value
+            if (virtualNode.props) {
+              Object.entries(virtualNode.props).forEach(([name, value]) => {
+                if (name === 'children' && name === 'key') {
+                return
+                }
+
+                if (realNode[name] !== value) {
+                  realNode[name] = value
+                }
               })
             }
 
-            if (virtualNode.nodeValue !== realNode.nodeValue) {
-              realNode.nodeValue = virtualNode.nodeValue
+            if (virtualNode.key) {
+              realNode.dataset.key = virtualNode.key
+            }
+
+            if (typeof virtualNode !== 'object' && virtualNode !== realNode.nodeValue) {
+              realNode.nodeValue = virtualNode
             }
 
         //sync child nodes
 
-        const virtualChildren = virtualNode.childNodes
+        const virtualChildren = virtualNode.props ? virtualNode.props.children || [] : []
         const realChildren = realNode.childNodes
 
         for (let i = 0; i < virtualChildren.length || i < realChildren.length; i++) {
@@ -375,12 +381,12 @@
             realNode.remove(real)
           }
           // Update
-          if (virtual !== undefined && real !== undefined && virtual.tagName === real.tagName) {
+          if (virtual !== undefined && real !== undefined &&  (virtual.type || '') === (real.tagName || '').toLowerCase()) {
             // console.log("Update ноду")
             sync(virtual, real)
           }
           // Replace
-          if (virtual !== undefined && real !== undefined && virtual.tagName !== real.tagName) {
+          if (virtual !== undefined && real !== undefined && (virtual.type || '') !== (real.tagName || '').toLowerCase()) {
             // console.log("Replace ноду")
             const newReal = createRealNodeByVirtual(virtual);
             sync(virtual, newReal)
@@ -398,12 +404,10 @@
 
       function createRealNodeByVirtual(virtual) {
         let newReal
-        if (virtual.nodeType === Node.TEXT_NODE) {
-          newReal = document.createTextNode('')
-        } else {
-          newReal = document.createElement(virtual.tagName)
+        if (typeof  virtual !== 'object') {
+            return  document.createTextNode('')
         }
-        return newReal
+        return document.createElement(virtual.type)
       }
 // #################
       setInterval(() => {
