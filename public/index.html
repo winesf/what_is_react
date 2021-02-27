@@ -61,241 +61,87 @@
       }
 
 
-      function App({ state }) {
-        return {
-          type: 'div',
-          props: {
-            className: 'app',
-            children: [
-              {
-                type: Header,
-                props: {menu: state.menu}
-              },
-              {
-                type: Clock,
-                props: {
-                  time: state.date
-                }
-              },
-              {
-                type: Cards,
-                props: {cards: state.cards}
-              },
-              {
-                type: 'h1',
-                props: {
-                  className: 'testnode'
-                },
-                children: [
-                  'End Page'
-                ]
-              }
-            ]
+      const VDom = {
+        createElement: (type, config, ...children ) => {
+          const key = config ? (config.key || null) : null
+          const props = config || {}
+
+          if (children.length === 1) {
+            props.children = children[0]
+          } else {
+            props.children = children
+          }
+          return {
+            type,
+            key,
+            props
           }
         }
       }
 
-
-
-      function Logo () {
-        return {
-          type: 'img',
-          props: {
-            className: 'logo',
-            src: 'img/logo.png',
-            alt: 'логотип',
-            width: 150,
-            height: 75
-          }
-        }
-       }
-      function Nav(menu) {
-        return {
-          type: 'nav',
-          props: {
-            className: 'header__nav',
-            children: [
-              {
-                type: 'ul',
-                props: {
-                  className: "nav__list"
-                }
-              }
-            ]
-          }
-        }
-
-        // Object.entries(menu).forEach(([id, name], index) => {
-        //   const navItem = document.createElement('li')
-        //   navItem.className = "nav__item"
-        //
-        //   const navLink = document.createElement('a')
-        //   navLink.innerText = name
-        //   navLink.href = id
-        //
-        //   navItem.append(navLink)
-        //   navList.append(navItem)
-        // })
-        // nav.append(navList);
-        //
-        // return nav
-        }
+      function App({ state }) {
+        return VDom.createElement('div', { className: 'app'},
+          VDom.createElement(Header,{menu: state.menu}),
+          VDom.createElement(Clock, {time: state.date}),
+          VDom.createElement(Cards, {cards: state.cards})
+        )
+      }
 
       function Header (menu) {
-        return {
-          type: 'header',
-          props: {
-            className: 'header',
-            children: [
-              {
-                type: Logo
-              },
-              {
-                type: Nav,
-                props: {
-                  children: [
-                    menu
-                  ]
-                }
-              }
-            ]
-          }
-        }
+        return VDom.createElement('header', {className: 'header'}, [
+          VDom.createElement(Logo),
+          VDom.createElement(Nav,{},menu)
+        ])
       }
 
-      // function Block (props) {
-      //   return {
-      //     type: 'div',
-      //     props: {
-      //       className: 'block',
-      //       children: props.children
-      //     },
-      //   }
-      // }
+      function Logo () {
+        return VDom.createElement('img', {className: 'logo',src: 'img/logo.png',alt: 'логотип', width: 150, height: 70})
+        }
 
+      function Nav(menu) {
+        // console.log(menu['children'].menu)
+        return VDom.createElement('nav' , {className: 'header__nav'},
+        VDom.createElement('ul',{className:'nav__list'},
+            VDom.createElement('li',{className: 'nav__item'},
+                VDom.createElement('a',{href: '#'}, "hello")))
+        )
+       }
 
       function Clock ({time}) {
        const isDay = time.getHours() >=7 && time.getHours() <= 21
-        return {
-         type: 'div',
-          props: {
-           className: 'clock',
-            children: [
-              {
-                type: 'span',
-                props: {
-                  className: 'value',
-                  children: [
-                    time.toLocaleString()
-                  ]
-                }
-              },
-              {
-                type: 'span',
-                props: {
-                  className: isDay ? 'icon day' : 'icon night',
-                }
-              }
-            ]
-          }
-        }
+        return VDom.createElement('div' ,{className: 'clock'},
+        VDom.createElement('span',{className: 'value'},time.toLocaleTimeString()),
+        VDom.createElement('span',{className: isDay ? 'icon day' : 'icon night'})
+        )
       }
 
       function Loading () {
-        return {
-            type: 'div',
-            props: {
-              className: 'is-loading',
-              id: 0,
-              name: '',
-              description: '',
-              price: '',
-              img: '',
-            }
-        }
+        return VDom.createElement('div',{ className: 'card is-loading'},
+          VDom.createElement('div',{className: 'image'},
+            VDom.createElement('img',)),
+          VDom.createElement('div',{className: 'content'},
+            VDom.createElement('div',{className: 'price'}),
+            VDom.createElement('h1',),
+            VDom.createElement('p',))
+        )
       }
         function Cards ({ cards }) {
         if (cards === null) {
-         return {
-           type: Loading,
-           props: {}
-         }
+            return VDom.createElement('div',{className: 'cards'},Loading())
         }
-
-        return  {
-          type: 'div',
-          props: {
-            className: 'cards',
-            children: cards.map((card) => ({
-              type: Card,
-              props: { card }
-            }))
-          }
-        }
+        return VDom.createElement('div', {className: 'cards'},
+        cards.map((card) => VDom.createElement(Card, { card, key: card.id}))
+        )
        }
 
-        function Card ({card}) {
-        return {
-          type: 'article',
-          key: card.id,
-          props: {
-            className: 'card',
-            children: [
-              {
-                type: 'div',
-                props: {
-                  className:'image',
-                  children: [
-                    {
-                      type: 'img',
-                      props: {
-                        src: card.img,
-                        alt: card.name
-                      }
-                    }
-                  ]
-                }
-              },
-              {
-                type: 'div',
-                props: {
-                  className: 'content',
-                  children: [
-                    {
-                      type: 'div',
-                      props: {
-                        className: 'price',
-                        children: [
-                          card.price
-                        ]
-                      }
-                    },
-                    {
-                     type: 'h1',
-                      props: {
-                       children: [
-                         card.name
-                       ]
-                      }
-                    },
-                    {
-                     type: 'p' ,
-                      props: {
-                       children: [
-                         card.description
-                       ]
-                      }
-                    }
-                  ]
-                }
-              }
-            ]
-          }
-        }
-
-          // if (card.class != undefined)
-          //   node.classList.add(card.class)
-
+        function Card ({card, key}) {
+        return VDom.createElement('article', {className: 'card', key},
+        VDom.createElement('div',{className: 'image'},
+            VDom.createElement('img',{src: card.img, alt: card.name})),
+        VDom.createElement('div',{className: 'content'},
+            VDom.createElement('div',{className: 'price'},card.price),
+            VDom.createElement('h1',{},card.name),
+            VDom.createElement('p',{},card.description)))
         }
 
 
@@ -306,7 +152,7 @@
 
       function renderView(state) {
         render(
-          App({state}),
+          VDom.createElement(App,{ state }),
           document.getElementById('root')
         )
       }

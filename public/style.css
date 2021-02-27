@@ -88,6 +88,7 @@ li:hover ul#submenu {
     border-top-right-radius: 5px;
 }
 .card .content {
+    text-align: center;
     padding: 20px 30px;
 }
 
