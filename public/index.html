@@ -58,7 +58,8 @@
           }
         }
       }
-      let state = {
+      // ########Store####
+      const initialState = {
         menu: {
           'About': "#" ,
           'Hello': "#" ,
@@ -68,25 +69,36 @@
         cards: null
       }
 
-
-      const VDom = {
-        createElement: (type, config, ...children ) => {
-          const key = config ? (config.key || null) : null
-          const props = config || {}
-
-          if (children.length === 1) {
-            props.children = children[0]
-          } else {
-            props.children = children
+      class Store {
+        constructor(initialState) {
+          this.state = initialState
+          this.listeners = []
+        }
+        subscribe(callback) {
+          this.listeners.push(callback)
+        }
+        getState () {
+          return this.state
+        }
+        changeState (diff) {
+          this.state = {
+            ...this.state,
+            ...(typeof diff === 'function' ? diff(this.state) : diff)
           }
-          return {
-            type,
-            key,
-            props
-          }
+          // renderView(this.state) можно при каждом изменение стейта дергать перерендинг но будет не красиво потому что появиться привязка к коду
+          this.listeners.forEach((listener) => {
+            listener()
+          })
         }
       }
+      //   setState (state) {
+      //     this.state = state
+      //   }
+      // }
 
+      const store = new Store(initialState)
+
+// #############View##################
       function App({ state }) {
         return (
           <div className="app">
@@ -156,7 +168,7 @@
        }
 
         function Card ({card, key}) {
-        return <article className="card" key={key}>
+        return <article className="card" key={key+1}>
           <div className="image">
             <img src={card.img} alt={card.name}/>
           </div>
@@ -170,17 +182,10 @@
 
 
 
-// ##################
-      // const newDom = App({ state })
-      // const realDomRoot = document.getElementById('root')
-      renderView(state)
+// #################render##############
 
-      function renderView(state) {
-        ReactDOM.render(
-          <App state={state} />,
-          document.getElementById('root')
-        )
-      }
+
+
 
       function render(virtualDom, realDomRoot) {
         const evaluatedVirtualDom = evaluate(virtualDom);
@@ -279,64 +284,58 @@
         return document.createElement(virtual.type)
       }
 // #################
+
+
+      function renderView(state) {
+        ReactDOM.render(
+          <App state={state} />,
+          document.getElementById('root')
+        )
+      }
+
+      store.subscribe(() => {
+        renderView(store.getState())
+      })
+
+      renderView(store.getState())
+
+
+      //  ######Events########
       setInterval(() => {
-        console.log("#CLOCK UPDATE")
-        state = {
-          ...state,
+        store.changeState({
           date: new Date()
-        }
-        renderView(state)
+        })
       }, 1000)
 
       api.get('/cards')
         .then((cards) => {
-          state = {
-            ...state,
-            cards
-          }
-          const onPrice = (data) => {
-            state = {
-              ...state,
-              cards: state.cards.map((card) => {
-                if (card.id === data.id) {
-                  return {
-                    ...card,
-                    price: data.price
-                  }
-                }
-                return card
-              })
-            }
-            renderView(state)
-          }
+       store.changeState({
+         cards
+       })
+
+      const onPrice = (data) => {
+         store.changeState(changeCardPrice(data.id, data.price))
+      }
 
           cards.forEach((card) => {
             stream.subscribe(`price-${card.id}`, onPrice)
           })
-
         })
-        .catch((error) => {
-          console.log('Ошибка' + error);
-        })
-
-      // setInterval(() => {
-      //   state = {
-      //     ...state,
-      //     cards: state.cards.map((card) => {
-      //       return {
-      //         ...card,
-      //         price: Math.round((Math.random()* 10 + 30))
-      //       }
-      //     })
-      //   }
-      // }, 5000)
-
-
-
-    //
-
-
-    </script>
+      // #######UTILS#######
+       function changeCardPrice(id, price) {
+        store.changeState((state) => ({
+          cards: state.cards.map((card) => {
+                  if (card.id === id) {
+                    return {
+                      ...card,
+                      price: price
+                    }
+                  }
+                  return card
+                })
+        }))
+       }
+   </script>
 
 </body>
 </html>
