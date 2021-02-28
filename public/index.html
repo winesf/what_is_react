@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="style.css">
 <!--    React library-->
     <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
-<!--    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>-->
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
 <!--    Babel library-->
     <script src="https://unpkg.com/babel-standalone@6/babel.js"></script>
 <!--    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>-->
@@ -60,9 +60,9 @@
       }
       let state = {
         menu: {
-          1: 'About',
-          2: 'Hello',
-          3: 'world',
+          'About': "#" ,
+          'Hello': "#" ,
+          'world': "#",
         },
         date: new Date(),
         cards: null
@@ -88,69 +88,86 @@
       }
 
       function App({ state }) {
-        return VDom.createElement('div', { className: 'app'},
-          VDom.createElement(Header,{menu: state.menu}),
-          VDom.createElement(Clock, {time: state.date}),
-          VDom.createElement(Cards, {cards: state.cards})
+        return (
+          <div className="app">
+            <Header menu={state.menu} />
+            <Clock time={state.date} />
+            <Cards cards={state.cards} />
+          </div>
         )
       }
 
       function Header (menu) {
-        return VDom.createElement('header', {className: 'header'}, [
-          VDom.createElement(Logo),
-          VDom.createElement(Nav,{},menu)
-        ])
+        return <header className="header">
+          <Logo />
+          <Nav menu={menu} />
+        </header>
       }
 
       function Logo () {
-        return VDom.createElement('img', {className: 'logo',src: 'img/logo.png',alt: 'логотип', width: 150, height: 70})
+        return <img className="logo" src="img/logo.png" alt="логотип" width="150" height="70" />
+        // return VDom.createElement('img', {className: 'logo',src: 'img/logo.png',alt: 'логотип', width: 150, height: 70})
         }
 
       function Nav(menu) {
-        // console.log(menu['children'].menu)
-        return VDom.createElement('nav' , {className: 'header__nav'},
-        VDom.createElement('ul',{className:'nav__list'},
-            VDom.createElement('li',{className: 'nav__item'},
-                VDom.createElement('a',{href: '#'}, "hello")))
-        )
+        const listmenu = menu['menu']['menu']
+        return <nav className="header__nav">
+          <ul className="nav__list">
+            <li className="nav__item">
+              <a href="#">Hello</a>
+            </li>
+          </ul>
+        </nav>
        }
 
       function Clock ({time}) {
        const isDay = time.getHours() >=7 && time.getHours() <= 21
-        return VDom.createElement('div' ,{className: 'clock'},
-        VDom.createElement('span',{className: 'value'},time.toLocaleTimeString()),
-        VDom.createElement('span',{className: isDay ? 'icon day' : 'icon night'})
-        )
+        return <div className="clock">
+          <span className="value" children={time.toLocaleTimeString()}></span>
+          <span className={isDay ? 'icon day' : 'icon night'}></span>
+        </div>
       }
 
       function Loading () {
-        return VDom.createElement('div',{ className: 'card is-loading'},
-          VDom.createElement('div',{className: 'image'},
-            VDom.createElement('img',)),
-          VDom.createElement('div',{className: 'content'},
-            VDom.createElement('div',{className: 'price'}),
-            VDom.createElement('h1',),
-            VDom.createElement('p',))
-        )
+        return <div className="card is-loading">
+          <div className="image">
+            <img src="" alt=""/>
+          </div>
+          <div className="content">
+           <div className="price"></div>
+            <h1></h1>
+            <p></p>
+          </div>
+        </div>
       }
         function Cards ({ cards }) {
         if (cards === null) {
-            return VDom.createElement('div',{className: 'cards'},Loading())
+            return <div className="cards">
+              <Loading />
+            </div>
         }
-        return VDom.createElement('div', {className: 'cards'},
-        cards.map((card) => VDom.createElement(Card, { card, key: card.id}))
+        return (
+          <div className="cards">
+            {
+              cards.map((card) => <Card card={card} key={card.id} />)
+            }
+          </div>
         )
        }
 
         function Card ({card, key}) {
-        return VDom.createElement('article', {className: 'card', key},
-        VDom.createElement('div',{className: 'image'},
-            VDom.createElement('img',{src: card.img, alt: card.name})),
-        VDom.createElement('div',{className: 'content'},
-            VDom.createElement('div',{className: 'price'},card.price),
-            VDom.createElement('h1',{},card.name),
-            VDom.createElement('p',{},card.description)))
-        }
+        return <article className="card" key={key}>
+          <div className="image">
+            <img src={card.img} alt={card.name}/>
+          </div>
+          <div className="content">
+            <div className="price">{card.price}</div>
+            <h1>{card.name}</h1>
+            <p>{card.description}</p>
+          </div>
+        </article>
+          }
+
 
 
 // ##################
@@ -159,8 +176,8 @@
       renderView(state)
 
       function renderView(state) {
-        render(
-          React.createElement(App,{ state }),
+        ReactDOM.render(
+          <App state={state} />,
           document.getElementById('root')
         )
       }
@@ -256,7 +273,6 @@
       }
 
       function createRealNodeByVirtual(virtual) {
-        let newReal
         if (typeof  virtual !== 'object') {
             return  document.createTextNode('')
         }
@@ -318,32 +334,7 @@
 
 
     //
-        function showTime(){
-          var h = state.date.getHours(); // 0 - 23
-          var m = state.date.getMinutes(); // 0 - 59
-          var s = state.date.getSeconds(); // 0 - 59
-          var session = "AM";
 
-          if(h == 0){
-            h = 12;
-          }
-
-          if(h > 12){
-            h = h - 12;
-            session = "PM";
-          }
-
-          h = (h < 10) ? "0" + h : h;
-          m = (m < 10) ? "0" + m : m;
-          s = (s < 10) ? "0" + s : s;
-
-          var time = h + ":" + m + ":" + s + " " + session;
-          document.getElementById("MyClockDisplay").innerText = time;
-          document.getElementById("MyClockDisplay").textContent = time;
-
-          setTimeout(showTime, 1000);
-
-        }
 
     </script>
 
