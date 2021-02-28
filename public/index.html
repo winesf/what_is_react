@@ -4,12 +4,20 @@
     <meta charset="UTF-8">
     <title>Title</title>
     <link rel="stylesheet" href="style.css">
+<!--    React library-->
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+<!--    Babel library-->
+    <script src="https://unpkg.com/babel-standalone@6/babel.js"></script>
+<!--    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>-->
 </head>
 <body>
+
+
 <div id="root"></div>
-    <script>
+   <script type="text/jsx" >
       const api = {
-        get (url) {
+        get(url) {
           switch (url) {
             case '/cards':
               return new Promise((resolve, reject) => {
@@ -52,251 +60,114 @@
       }
       let state = {
         menu: {
-          1: 'About',
-          2: 'Hello',
-          3: 'world',
+          'About': "#" ,
+          'Hello': "#" ,
+          'world': "#",
         },
         date: new Date(),
         cards: null
       }
 
 
-      function App({ state }) {
-        return {
-          type: 'div',
-          props: {
-            className: 'app',
-            children: [
-              {
-                type: Header,
-                props: {menu: state.menu}
-              },
-              {
-                type: Clock,
-                props: {
-                  time: state.date
-                }
-              },
-              {
-                type: Cards,
-                props: {cards: state.cards}
-              },
-              {
-                type: 'h1',
-                props: {
-                  className: 'testnode'
-                },
-                children: [
-                  'End Page'
-                ]
-              }
-            ]
+      const VDom = {
+        createElement: (type, config, ...children ) => {
+          const key = config ? (config.key || null) : null
+          const props = config || {}
+
+          if (children.length === 1) {
+            props.children = children[0]
+          } else {
+            props.children = children
+          }
+          return {
+            type,
+            key,
+            props
           }
         }
       }
 
-
-
-      function Logo () {
-        return {
-          type: 'img',
-          props: {
-            className: 'logo',
-            src: 'img/logo.png',
-            alt: 'логотип',
-            width: 150,
-            height: 75
-          }
-        }
-       }
-      function Nav(menu) {
-        return {
-          type: 'nav',
-          props: {
-            className: 'header__nav',
-            children: [
-              {
-                type: 'ul',
-                props: {
-                  className: "nav__list"
-                }
-              }
-            ]
-          }
-        }
-
-        // Object.entries(menu).forEach(([id, name], index) => {
-        //   const navItem = document.createElement('li')
-        //   navItem.className = "nav__item"
-        //
-        //   const navLink = document.createElement('a')
-        //   navLink.innerText = name
-        //   navLink.href = id
-        //
-        //   navItem.append(navLink)
-        //   navList.append(navItem)
-        // })
-        // nav.append(navList);
-        //
-        // return nav
-        }
+      function App({ state }) {
+        return (
+          <div className="app">
+            <Header menu={state.menu} />
+            <Clock time={state.date} />
+            <Cards cards={state.cards} />
+          </div>
+        )
+      }
 
       function Header (menu) {
-        return {
-          type: 'header',
-          props: {
-            className: 'header',
-            children: [
-              {
-                type: Logo
-              },
-              {
-                type: Nav,
-                props: {
-                  children: [
-                    menu
-                  ]
-                }
-              }
-            ]
-          }
-        }
+        return <header className="header">
+          <Logo />
+          <Nav menu={menu} />
+        </header>
       }
 
-      // function Block (props) {
-      //   return {
-      //     type: 'div',
-      //     props: {
-      //       className: 'block',
-      //       children: props.children
-      //     },
-      //   }
-      // }
+      function Logo () {
+        return <img className="logo" src="img/logo.png" alt="логотип" width="150" height="70" />
+        // return VDom.createElement('img', {className: 'logo',src: 'img/logo.png',alt: 'логотип', width: 150, height: 70})
+        }
 
+      function Nav(menu) {
+        const listmenu = menu['menu']['menu']
+        return <nav className="header__nav">
+          <ul className="nav__list">
+            <li className="nav__item">
+              <a href="#">Hello</a>
+            </li>
+          </ul>
+        </nav>
+       }
 
       function Clock ({time}) {
        const isDay = time.getHours() >=7 && time.getHours() <= 21
-        return {
-         type: 'div',
-          props: {
-           className: 'clock',
-            children: [
-              {
-                type: 'span',
-                props: {
-                  className: 'value',
-                  children: [
-                    time.toLocaleString()
-                  ]
-                }
-              },
-              {
-                type: 'span',
-                props: {
-                  className: isDay ? 'icon day' : 'icon night',
-                }
-              }
-            ]
-          }
-        }
+        return <div className="clock">
+          <span className="value" children={time.toLocaleTimeString()}></span>
+          <span className={isDay ? 'icon day' : 'icon night'}></span>
+        </div>
       }
 
       function Loading () {
-        return {
-            type: 'div',
-            props: {
-              className: 'is-loading',
-              id: 0,
-              name: '',
-              description: '',
-              price: '',
-              img: '',
-            }
-        }
+        return <div className="card is-loading">
+          <div className="image">
+            <img src="" alt=""/>
+          </div>
+          <div className="content">
+           <div className="price"></div>
+            <h1></h1>
+            <p></p>
+          </div>
+        </div>
       }
         function Cards ({ cards }) {
         if (cards === null) {
-         return {
-           type: Loading,
-           props: {}
-         }
+            return <div className="cards">
+              <Loading />
+            </div>
         }
-
-        return  {
-          type: 'div',
-          props: {
-            className: 'cards',
-            children: cards.map((card) => ({
-              type: Card,
-              props: { card }
-            }))
-          }
-        }
+        return (
+          <div className="cards">
+            {
+              cards.map((card) => <Card card={card} key={card.id} />)
+            }
+          </div>
+        )
        }
 
-        function Card ({card}) {
-        return {
-          type: 'article',
-          key: card.id,
-          props: {
-            className: 'card',
-            children: [
-              {
-                type: 'div',
-                props: {
-                  className:'image',
-                  children: [
-                    {
-                      type: 'img',
-                      props: {
-                        src: card.img,
-                        alt: card.name
-                      }
-                    }
-                  ]
-                }
-              },
-              {
-                type: 'div',
-                props: {
-                  className: 'content',
-                  children: [
-                    {
-                      type: 'div',
-                      props: {
-                        className: 'price',
-                        children: [
-                          card.price
-                        ]
-                      }
-                    },
-                    {
-                     type: 'h1',
-                      props: {
-                       children: [
-                         card.name
-                       ]
-                      }
-                    },
-                    {
-                     type: 'p' ,
-                      props: {
-                       children: [
-                         card.description
-                       ]
-                      }
-                    }
-                  ]
-                }
-              }
-            ]
+        function Card ({card, key}) {
+        return <article className="card" key={key}>
+          <div className="image">
+            <img src={card.img} alt={card.name}/>
+          </div>
+          <div className="content">
+            <div className="price">{card.price}</div>
+            <h1>{card.name}</h1>
+            <p>{card.description}</p>
+          </div>
+        </article>
           }
-        }
 
-          // if (card.class != undefined)
-          //   node.classList.add(card.class)
-
-        }
 
 
 // ##################
@@ -305,8 +176,8 @@
       renderView(state)
 
       function renderView(state) {
-        render(
-          App({state}),
+        ReactDOM.render(
+          <App state={state} />,
           document.getElementById('root')
         )
       }
@@ -323,7 +194,6 @@
             ]
           },
         }
-
         sync(virtualDomRoot, realDomRoot)
       }
 
@@ -349,11 +219,11 @@
         //sync element
             if (virtualNode.props) {
               Object.entries(virtualNode.props).forEach(([name, value]) => {
-                if (name === 'children' && name === 'key') {
+                if (name === 'children' || name === 'key') {
                 return
                 }
 
-                if (realNode[name] !== value) {
+                if (realNode[name] !== value ) {
                   realNode[name] = value
                 }
               })
@@ -403,7 +273,6 @@
       }
 
       function createRealNodeByVirtual(virtual) {
-        let newReal
         if (typeof  virtual !== 'object') {
             return  document.createTextNode('')
         }
@@ -465,33 +334,9 @@
 
 
     //
-        function showTime(){
-          var h = state.date.getHours(); // 0 - 23
-          var m = state.date.getMinutes(); // 0 - 59
-          var s = state.date.getSeconds(); // 0 - 59
-          var session = "AM";
 
-          if(h == 0){
-            h = 12;
-          }
-
-          if(h > 12){
-            h = h - 12;
-            session = "PM";
-          }
-
-          h = (h < 10) ? "0" + h : h;
-          m = (m < 10) ? "0" + m : m;
-          s = (s < 10) ? "0" + s : s;
-
-          var time = h + ":" + m + ":" + s + " " + session;
-          document.getElementById("MyClockDisplay").innerText = time;
-          document.getElementById("MyClockDisplay").textContent = time;
-
-          setTimeout(showTime, 1000);
-
-        }
 
     </script>
+
 </body>
 </html>
