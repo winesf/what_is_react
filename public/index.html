@@ -59,19 +59,81 @@
         }
       }
       // ########Store####
-      const initialState = {
-        menu: {
-          'About': "#" ,
-          'Hello': "#" ,
-          'world': "#",
-        },
-        date: new Date(),
+      const SET_TIME = 'SET_TIME'
+
+      const clockInitialState = {
+        date: new Date()
+      }
+      function clockReducer(state = clockInitialState, action) {
+        switch (action.type) {
+          case SET_TIME:
+            return {
+              ...state,
+              date: action.date
+            }
+          default:
+            return state
+        }
+      }
+
+
+      const SET_CARDS = 'SET_CARDS'
+      const CHANGE_CARD_PRICE = 'CHANGE_CARD_PRICE'
+
+      const auctionInitialState = {
         cards: null
+      }
+      function auctionReducer(state = auctionInitialState, action) {
+        switch (action.type) {
+          case SET_CARDS:
+            return {
+              ...state,
+              cards: action.cards
+            }
+          case CHANGE_CARD_PRICE:
+            return {
+              ...state,
+              cards: state.cards.map((card) => {
+                if (card.id === action.id) {
+                  return {
+                    ...card,
+                    price: action.price
+                  }
+                }
+                return card
+              })
+            }
+          default:
+            return state
+        }
+      }
+
+
+      //Action creator
+      function setTime(date) {
+        return {
+          type: SET_TIME,
+          date
+        }
+      }
+
+      function setCards(cards) {
+        return   {
+          type: SET_CARDS,
+          cards
+        }
+      }
+      function changeCardPrice(id, price) {
+        return {type: CHANGE_CARD_PRICE,
+          id,
+          price
+        }
       }
 
       class Store {
-        constructor(initialState) {
-          this.state = initialState
+        constructor(reducer, initialState) {
+          this.reducer = reducer
+          this.state = reducer(initialState, {type: null})
           this.listeners = []
         }
         subscribe(listener) {
@@ -82,34 +144,42 @@
             this.listeners.splice(index, 1)
           }
         }
-
+        dispatch (action) {
+          this.state = this.reducer(this.state, action)
+          this.listeners.forEach((listener) => listener())
+        }
         getState () {
           return this.state
         }
-        changeState (diff) {
-          this.state = {
-            ...this.state,
-            ...(typeof diff === 'function' ? diff(this.state) : diff)
-          }
-          // renderView(this.state) можно при каждом изменение стейта дергать перерендинг но будет не красиво потому что появиться привязка к коду
-          this.listeners.forEach((listener) => {listener()})
-        }
 
-        setState (state) {
-          this.state = (typeof state === 'function' ? state(this.state) : state)
-          this.listeners.forEach((listener) => listener())
+      }
+      // function combineReducer (state = {}, action) {
+      //   return {
+      //     clock: clockReducer(state.clock, action),
+      //     auction: auctionReducer(state.auction, action)
+      //   }
+      // }
+      function combineReducers(reducers) {
+        return (state = {}, action) => {
+          const result = {};
+          Object.entries(reducers).forEach(([key,reducer]) => {
+            result[key] = reducer(state[key], action)
+          })
+          return result
         }
       }
-
-      const store = new Store(initialState)
+      const store = new Store(combineReducers({
+        clock: clockReducer,
+        auction: auctionReducer
+      }))
 
 // #############View##################
       function App({ state }) {
         return (
           <div className="app">
-            <Header menu={state.menu} />
-            <Clock time={state.date} />
-            <Cards cards={state.cards} />
+            <Header menu={{hello:'world'}} />
+            <Clock time={state.clock.date} />
+            <Cards cards={state.auction.cards} />
           </div>
         )
       }
@@ -308,48 +378,18 @@
       //  ######Events########
 
 
-      function appReducer(state, action, params) {
-            switch (action) {
-              case 'setTime':
-                return {
-                  ...state,
-                  date: params.date
-                }
-              case 'setCards':
 
-                console.log(params)
-                  return {
-                    ...state,
-                    cards: params.cards
-                  }
-              case 'changeCardPrice':
-                return {
-                  ...state,
-                  cards: state.cards.map((card) => {
-                    if (card.id === params.id) {
-                      return {
-                        ...card,
-                        price: params.price
-                      }
-                    }
-                    return card
-                  })
-                }
-              default:
-                    return state
-            }
-      }
       setInterval(() => {
-        store.setState((state) => appReducer(state,'setTime' ,{date: new Date()}))
+       store.dispatch(setTime(new Date()))
       }, 1000)
 
 
         api.get('/cards').then((cards) => {
-          store.setState((state) => appReducer(state, 'setCards', {cards}))
+          store.dispatch(setCards(cards))
 
           cards.forEach((card) => {
             stream.subscribe(`price-${card.id}`, (data) => {
-              store.setState((state) => appReducer(state, 'changeCardPrice', { id: data.id, price: data.price} ))
+              store.dispatch(changeCardPrice(data.id , data.price))
             })
           })
         })
