@@ -74,9 +74,15 @@
           this.state = initialState
           this.listeners = []
         }
-        subscribe(callback) {
-          this.listeners.push(callback)
+        subscribe(listener) {
+          this.listeners.push(listener)
+
+          return () => {
+            const index = this.listeners.indexOf(listener)
+            this.listeners.splice(index, 1)
+          }
         }
+
         getState () {
           return this.state
         }
@@ -86,15 +92,14 @@
             ...(typeof diff === 'function' ? diff(this.state) : diff)
           }
           // renderView(this.state) можно при каждом изменение стейта дергать перерендинг но будет не красиво потому что появиться привязка к коду
-          this.listeners.forEach((listener) => {
-            listener()
-          })
+          this.listeners.forEach((listener) => {listener()})
+        }
+
+        setState (state) {
+          this.state = (typeof state === 'function' ? state(this.state) : state)
+          this.listeners.forEach((listener) => listener())
         }
       }
-      //   setState (state) {
-      //     this.state = state
-      //   }
-      // }
 
       const store = new Store(initialState)
 
@@ -293,7 +298,7 @@
         )
       }
 
-      store.subscribe(() => {
+     const unsubscribe = store.subscribe(() => {
         renderView(store.getState())
       })
 
@@ -301,40 +306,53 @@
 
 
       //  ######Events########
+
+
+      function appReducer(state, action, params) {
+            switch (action) {
+              case 'setTime':
+                return {
+                  ...state,
+                  date: params.date
+                }
+              case 'setCards':
+
+                console.log(params)
+                  return {
+                    ...state,
+                    cards: params.cards
+                  }
+              case 'changeCardPrice':
+                return {
+                  ...state,
+                  cards: state.cards.map((card) => {
+                    if (card.id === params.id) {
+                      return {
+                        ...card,
+                        price: params.price
+                      }
+                    }
+                    return card
+                  })
+                }
+              default:
+                    return state
+            }
+      }
       setInterval(() => {
-        store.changeState({
-          date: new Date()
-        })
+        store.setState((state) => appReducer(state,'setTime' ,{date: new Date()}))
       }, 1000)
 
-      api.get('/cards')
-        .then((cards) => {
-       store.changeState({
-         cards
-       })
 
-      const onPrice = (data) => {
-         store.changeState(changeCardPrice(data.id, data.price))
-      }
+        api.get('/cards').then((cards) => {
+          store.setState((state) => appReducer(state, 'setCards', {cards}))
 
           cards.forEach((card) => {
-            stream.subscribe(`price-${card.id}`, onPrice)
+            stream.subscribe(`price-${card.id}`, (data) => {
+              store.setState((state) => appReducer(state, 'changeCardPrice', { id: data.id, price: data.price} ))
+            })
           })
         })
-      // #######UTILS#######
-       function changeCardPrice(id, price) {
-        store.changeState((state) => ({
-          cards: state.cards.map((card) => {
-                  if (card.id === id) {
-                    return {
-                      ...card,
-                      price: price
-                    }
-                  }
-                  return card
-                })
-        }))
-       }
    </script>
 
 </body>
