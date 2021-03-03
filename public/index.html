@@ -216,10 +216,20 @@
 // #############View##################
 
       function App({store }) {
+        return (
+          <div className="app">
+            <Header menu={{hello:'world'}} />
+            <ClockContainer store={store} />
+            <CardsContainer store={store} />
+            <CardTableContainer store={store} />
+          </div>
+        )
+      }
+
+      function CardTableContainer({store}) {
         const state = store.getState()
         const dispatch = store.dispatch
 
-        const date = state.clock.date
         const cards = state.auction.cards
         const favorite = (id) => {
           api.post(`/cards/${id}/favorite`).then(() =>{
@@ -231,16 +241,8 @@
             dispatch(unfavoriteCard(id))
           })
         }
-        return (
-          <div className="app">
-            <Header menu={{hello:'world'}} />
-            <Clock date={date} />
-            <Cards cards={cards} favorite={favorite} unfavorite={unfavorite} />
-            <CardTable cards={cards} favorite={favorite} unfavorite={unfavorite} />
-          </div>
-        )
+        return <CardTable cards={cards} favorite={favorite} unfavorite={unfavorite} />
       }
-
       function CardTable({ cards, favorite, unfavorite}) {
         if (cards === null) {
           return 1
@@ -299,6 +301,12 @@
         </nav>
        }
 
+      function ClockContainer ({ store }) {
+        const state = store.getState()
+        const date = state.clock.date
+
+        return <Clock date={date} />
+      }
       function Clock ({date}) {
        const isDay = date.getHours() >=7 && date.getHours() <= 21
         return <div className="clock">
@@ -315,16 +323,9 @@
         it('Render time of day', () => {
           const container = document.createElement('div')
 
-          const store = Redux.createStore((state) => state, {
-            clock: {
-              date:new Date('2021-10-19T13:12:31')
-            }
-          })
-          ReactDOM.render(
-            <Clock store={store} />,
-            container
-          )
+
           //redux-mock-store
+
 
           ReactDOM.render(
             <Clock date={new Date('2021-10-19T13:12:31')} />
@@ -350,6 +351,19 @@
           assert.equal(clock.querySelector('.value').innerText, '3:12:31 AM')
           assert.equal(clock.querySelector('.icon').className, 'icon night')
         })
+
+        it("ClockContainer", () => {
+          const container = document.createElement('div')
+          const store = Redux.createStore((state) => state, {
+            clock: {
+              date:new Date('2021-10-19T13:12:31')
+            }
+          })
+          ReactDOM.render(
+            <ClockContainer store={store} />,
+            container
+          )
+        })
       })
       mocha.run()
       // ###########################
@@ -365,7 +379,14 @@
           </div>
         </div>
       }
-        function Cards ({ cards , favorite, unfavorite }) {
+
+      function CardsContainer ({store}) {
+        const state = store.getState()
+        const cards = state.auction.cards
+
+        return <Cards cards={cards} store={store} />
+      }
+        function Cards ({ cards , store={store} }) {
         if (cards === null) {
             return <div className="cards">
               <Loading />
@@ -374,14 +395,29 @@
         return (
           <div className="cards">
             {
-              cards.map((card) => <Card key={card.id} card={card}  favorite={favorite} unfavorite={unfavorite} />)
+              cards.map((card) => <CardConnected key={card.id}  store={store} card={card} />)
             }
           </div>
         )
        }
 
+       function CardConnected({card, store}) {
+         const dispatch = store.dispatch
+         const favorite = (id) => {
+           api.post(`/cards/${id}/favorite`).then(() =>{
+             dispatch(favoriteCard(id))
+           })
+         }
+         const unfavorite = (id) => {
+           api.post(`/cards/${id}/unfavorite`).then(() =>{
+             dispatch(unfavoriteCard(id))
+           })
+         }
+
+         return <Card  card={card} favorite={favorite} unfavorite={unfavorite} />
+       }
         function Card ({card,  favorite ,unfavorite }) {
-        return <article className={'card' + (card.favorite ? ' favorite' : '')} >
+        return <article   className={'card' + (card.favorite ? ' favorite' : '')} >
           <div className="image">
             <img src={card.img} alt={card.name}/>
           </div>
