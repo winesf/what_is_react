@@ -201,14 +201,14 @@
 
       // #############Store##################
       function favoriteAsync (id) {
-        return (dispatch) => {
+        return (dispatch,getState, api) => {
           api.post(`/cards/${id}/favorite`).then(() => {
             dispatch(favoriteCard(id))
           })
         }
       }
       function unfavoriteAsync (id) {
-        return (dispatch) => {
+        return (dispatch,getState, {api}) => {
           api.post(`/cards/${id}/unfavorite`).then(() => {
             dispatch(unfavoriteCard(id))
           })
@@ -231,7 +231,7 @@
         clock: clockReducer,
         auction: auctionReducer
       }),
-      Redux.applyMiddleware(thunk)
+      Redux.applyMiddleware(thunk.withExtraArgument({ api }))
       )
 
       // #############View##################
