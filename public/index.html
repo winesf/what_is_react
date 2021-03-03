@@ -44,6 +44,24 @@
                   ])
                 },500)
               })
+            default:
+              throw new Error('Ooopss')
+          }
+        },
+       post (url)  {
+          if (/^\/cards\/(\d+)\/favorite$/.exec(url)) {
+            return new Promise((resolve) => {
+              setTimeout(() => {
+                resolve({})
+              },500)
+            })
+          }
+          if (/^\/cards\/(\d+)\/unfavorite$/.exec(url)) {
+            return new Promise((resolve) => {
+              setTimeout(() => {
+                resolve({})
+              },500)
+            })
           }
         }
       }
@@ -83,6 +101,8 @@
 
       const SET_CARDS = 'SET_CARDS'
       const CHANGE_CARD_PRICE = 'CHANGE_CARD_PRICE'
+      const FAVORITE_CARD = 'FAVORITE_CARD'
+      const UNFAVORITE_CARD = 'UNFAVORITE_CARD'
 
       const auctionInitialState = {
         cards: null
@@ -102,6 +122,32 @@
                   return {
                     ...card,
                     price: action.price
+                  }
+                }
+                return card
+              })
+            }
+            case FAVORITE_CARD:
+              return {
+                ...state,
+                cards: state.cards.map((card) => {
+                  if (card.id === action.id) {
+                    return {
+                      ...card,
+                      favorite:true
+                    }
+                  }
+                  return card
+                })
+              }
+              case UNFAVORITE_CARD:
+            return {
+              ...state,
+              cards: state.cards.map((card) => {
+                if (card.id === action.id) {
+                  return {
+                    ...card,
+                    favorite:false
                   }
                 }
                 return card
@@ -134,6 +180,18 @@
         }
       }
 
+      function favoriteCard (id) {
+        return {
+          type: FAVORITE_CARD,
+          id
+        }
+      }
+      function unfavoriteCard (id) {
+        return {
+          type: UNFAVORITE_CARD,
+          id
+        }
+      }
 
       function combineReducers(reducers) {
         return (state = {}, action) => {
@@ -150,13 +208,49 @@
       }))
 
 // #############View##################
-      function App({ state }) {
+      function App({ state, favorite, unfavorite }) {
         return (
           <div className="app">
             <Header menu={{hello:'world'}} />
             <Clock time={state.clock.date} />
-            <Cards cards={state.auction.cards} />
+            <Cards cards={state.auction.cards} favorite={favorite} unfavorite={unfavorite} />
+            <CardTable cards={state.auction.cards} favorite={favorite} unfavorite={unfavorite} />
           </div>
+        )
+      }
+
+      function CardTable({ cards, favorite, unfavorite}) {
+        if (cards === null) {
+          return <Loading />
+        }
+        return (
+          <table className="container">
+            <thead>
+            <tr>
+              <th><h1>Cards</h1></th>
+              <th><h1>Description</h1></th>
+              <th><h1>Price</h1></th>
+              <th><h1>Favorite</h1></th>
+            </tr>
+            </thead>
+
+            <tbody>
+            {cards.map((card) =>(
+              <tr key={card.id + 22}>
+                <td>{card.name}</td>
+                <td>{card.description}</td>
+                <td>{card.price}</td>
+                <td>
+                  <FavoriteBtn
+                    active={card.favorite}
+                    favorite={() => favorite(card.id)}
+                    unfavorite={() => unfavorite(card.id)}
+                  />
+                </td>
+              </tr>
+            ))}
+            </tbody>
+          </table>
         )
       }
 
@@ -203,7 +297,7 @@
           </div>
         </div>
       }
-        function Cards ({ cards }) {
+        function Cards ({ cards , favorite, unfavorite }) {
         if (cards === null) {
             return <div className="cards">
               <Loading />
@@ -212,13 +306,13 @@
         return (
           <div className="cards">
             {
-              cards.map((card) => <Card card={card} key={card.id} />)
+              cards.map((card) => <Card card={card} key={card.id} favorite={favorite} unfavorite={unfavorite} />)
             }
           </div>
         )
        }
 
-        function Card ({card, key}) {
+        function Card ({card, key, favorite ,unfavorite }) {
         return <article className={'card' + (card.favorite ? ' favorite' : '')} key={key}>
           <div className="image">
             <img src={card.img} alt={card.name}/>
@@ -227,19 +321,25 @@
             <div className="price">{card.price}</div>
             <h1>{card.name}</h1>
             <p>{card.description}</p>
-             <FavoriteBtn active={card.favorite} />
+             <FavoriteBtn
+               active={card.favorite}
+               favorite={ () => favorite(card.id)}
+               unfavorite={() => unfavorite(card.id)}
+             />
           </div>
         </article>
 
           }
 
-        function FavoriteBtn ({ active }) {
-        return active
-          ? <button type="button" className="button">
-            <span><ion-icon name="heart-sharp" /> Favorite</span></button>
 
-          : <button type="button" className="button">
-            <span> <ion-icon name="heart-outline" /> Unfavorite</span></button>
+
+        function FavoriteBtn ({ active, unfavorite, favorite  }) {
+        return active
+          ? <button type="button" onClick={unfavorite} className="button">
+            <span><ion-icon name="heart-sharp" /> Unfavorite</span></button>
+
+          : <button type="button" onClick={favorite} className="button">
+            <span> <ion-icon name="heart-outline" /> Favorite</span></button>
         }
 
 // #################render##############
@@ -346,18 +446,30 @@
 // #################
 
 
-      function renderView(state) {
+      function renderView(store) {
+        const state = store.getState()
+        const favorite = (id) => {
+          api.post(`/cards/${id}/favorite`).then(() =>{
+            store.dispatch(favoriteCard(id))
+          })
+        }
+        const unfavorite = (id) => {
+          api.post(`/cards/${id}/unfavorite`).then(() =>{
+            store.dispatch(unfavoriteCard(id))
+          })
+        }
+
         ReactDOM.render(
-          <App state={state} />,
+          <App state={state} favorite={favorite} unfavorite={unfavorite} />,
           document.getElementById('root')
         )
       }
 
      const unsubscribe = store.subscribe(() => {
-        renderView(store.getState())
+        renderView(store)
       })
 
-      renderView(store.getState())
+      renderView(store)
 
 
       //  ######Events########
@@ -378,6 +490,8 @@
             })
           })
         })
+
+
    </script>
 
 </body>
