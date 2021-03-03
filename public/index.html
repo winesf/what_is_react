@@ -11,10 +11,16 @@
     <script src="https://unpkg.com/babel-standalone@6/babel.js"></script>
 <!--    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>-->
     <script src="https://unpkg.com/redux@4/dist/redux.js"></script>
+<!--    icons-->
     <script src="https://unpkg.com/ionicons@5.4.0/dist/ionicons.js"></script>
+<!--    Tests-->
+    <script src="https://unpkg.com/mocha@8/mocha.js"></script>
+    <link href="https://unpkg.com/mocha@8/mocha.css" rel="stylesheet">
+    <script src="https://unpkg.com/chai@2/chai.js"></script>
 </head>
 <body>
 
+<div id="mocha"></div>
 
 <div id="root"></div>
    <script type="text/jsx" >
@@ -209,7 +215,22 @@
 
 // #############View##################
 
-      function App({date, cards, favorite, unfavorite }) {
+      function App({store }) {
+        const state = store.getState()
+        const dispatch = store.dispatch
+
+        const date = state.clock.date
+        const cards = state.auction.cards
+        const favorite = (id) => {
+          api.post(`/cards/${id}/favorite`).then(() =>{
+            dispatch(favoriteCard(id))
+          })
+        }
+        const unfavorite = (id) => {
+          api.post(`/cards/${id}/unfavorite`).then(() =>{
+            dispatch(unfavoriteCard(id))
+          })
+        }
         return (
           <div className="app">
             <Header menu={{hello:'world'}} />
@@ -286,6 +307,52 @@
         </div>
       }
 
+      // ###########################
+        mocha.setup('bdd');
+      const assert = chai.assert;
+
+      describe('Clock', () => {
+        it('Render time of day', () => {
+          const container = document.createElement('div')
+
+          const store = Redux.createStore((state) => state, {
+            clock: {
+              date:new Date('2021-10-19T13:12:31')
+            }
+          })
+          ReactDOM.render(
+            <Clock store={store} />,
+            container
+          )
+          //redux-mock-store
+
+          ReactDOM.render(
+            <Clock date={new Date('2021-10-19T13:12:31')} />
+            ,container
+          )
+
+          const clock = container.querySelector('.clock')
+
+          assert.equal(clock.querySelector('.value').innerText, '1:12:31 PM')
+          assert.equal(clock.querySelector('.icon').className, 'icon day')
+        })
+
+        it('time of night', () => {
+          const container = document.createElement('div')
+
+          ReactDOM.render(
+            <Clock date={new Date('2021-10-19T03:12:31')} />
+            ,container
+          )
+
+          const clock = container.querySelector('.clock')
+
+          assert.equal(clock.querySelector('.value').innerText, '3:12:31 AM')
+          assert.equal(clock.querySelector('.icon').className, 'icon night')
+        })
+      })
+      mocha.run()
+      // ###########################
       function Loading () {
         return <div className="card is-loading">
           <div className="image">
@@ -448,24 +515,8 @@
 
 
       function renderView(store) {
-        const state = store.getState()
-        const dispatch = store.dispatch
-        const date = state.clock.date
-        const cards = state.auction.cards
-
-        const favorite = (id) => {
-          api.post(`/cards/${id}/favorite`).then(() =>{
-            dispatch(favoriteCard(id))
-          })
-        }
-        const unfavorite = (id) => {
-          api.post(`/cards/${id}/unfavorite`).then(() =>{
-            dispatch(unfavoriteCard(id))
-          })
-        }
-
         ReactDOM.render(
-          <App date={date} cards={cards} favorite={favorite} unfavorite={unfavorite} />,
+          <App store={store} />,
           document.getElementById('root')
         )
       }
