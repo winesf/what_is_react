@@ -214,20 +214,25 @@
       // #############View##################
       const  StoreContext = React.createContext()
       // #############View##################
-      function connect(mapStateToProps,mapDispatchToProps, WrappedComponent) {
-        return (props) => {
-          return (
-            <StoreContext.Consumer>
-              {(store) => {
-                const state = store.getState()
-                const dispatch = store.dispatch
+      function connect(mapStateToProps,mapDispatchToProps ) {
+        return (WrappedComponent) => {
+          return (props) => {
+            return (
+              <StoreContext.Consumer>
+                {(store) => {
+                  // store.subscribe(() => {
+                  //   this.renender()
+                  // })
+                  const state = store.getState()
+                  const dispatch = store.dispatch
 
-                const stateToProps = mapStateToProps ? mapStateToProps(state) : {}
-                const dispatchToProps = mapDispatchToProps ? mapDispatchToProps(dispatch) : {}
-                return <WrappedComponent {...props} {...stateToProps} {...dispatchToProps} />
-              }}
-            </StoreContext.Consumer>
-          )
+                  const stateToProps = mapStateToProps ? mapStateToProps(state) : {}
+                  const dispatchToProps = mapDispatchToProps ? mapDispatchToProps(dispatch) : {}
+                  return <WrappedComponent {...props} {...stateToProps} {...dispatchToProps} />
+                }}
+              </StoreContext.Consumer>
+            )
+          }
         }
       }
       // #############View##################
@@ -241,9 +246,6 @@
           </div>
         )
       }
-
-
-
 
       function Header (menu) {
         return <header className="header">
@@ -273,7 +275,7 @@
       })
 
 
-      const ClockConnected = connect(clockMapStateToProps,null ,Clock)
+      const ClockConnected = connect(clockMapStateToProps)(Clock)
 
 
       function Clock ({date}) {
@@ -312,7 +314,7 @@
         )
        }
       const cardsMapStateToProps = (state) => ({cards: state.auction.cards })
-      const CardsConnected = connect(cardsMapStateToProps,null,Cards)
+      const CardsConnected = connect(cardsMapStateToProps)(Cards)
 
 
         function Card ({card,  favorite ,unfavorite }) {
@@ -378,8 +380,10 @@
            })
        }
      })
-      const CardConnected = connect(null, cardMapDispatchToProps, Card)
-      const CardsTableConnect = connect(cardsMapStateToProps, cardMapDispatchToProps, CardTable)
+      // const enhance = connect(null, cardMapDispatchToProps)
+      // const CardConnected = enhance(Card)
+      const CardConnected = connect( cardMapDispatchToProps)(Card)
+      const CardsTableConnect = connect(cardsMapStateToProps, cardMapDispatchToProps)(CardTable)
 
       function FavoriteBtn ({ active, unfavorite, favorite  }) {
         return active
