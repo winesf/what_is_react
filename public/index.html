@@ -219,7 +219,7 @@
         return (
           <div className="app">
             <Header menu={{hello:'world'}} />
-            <ClockContainer  />
+            <ClockConnected />
             <CardsContainer  />
             <CardTableContainer />
           </div>
@@ -293,6 +293,7 @@
         </header>
       }
 
+
       function Logo () {
         return <img className="logo" src="img/logo.png" alt="логотип" width="150" height="70" />
         }
@@ -308,17 +309,26 @@
         </nav>
        }
 
-      function ClockContainer () {
-        return (
-          <StoreContext.Consumer>
-            {(store) => {
-              const state = store.getState()
-              const date = state.clock.date
-              return <Clock date={date} />
-            }}
-          </StoreContext.Consumer>
-        )
+      const clockMapStateToProps = (state) => ({
+        date:state.clock.date
+      })
+
+      function connect(mapStateToProps, WrappedComponent) {
+        return () => {
+         return (
+           <StoreContext.Consumer>
+             {(store) => {
+               const state = store.getState()
+               const stateToProps = mapStateToProps(state)
+               return <WrappedComponent {...stateToProps} />
+             }}
+           </StoreContext.Consumer>
+         )
+        }
       }
+      const ClockConnected = connect(clockMapStateToProps, Clock)
+
+
       function Clock ({date}) {
        const isDay = date.getHours() >=7 && date.getHours() <= 21
         return <div className="clock">
@@ -345,14 +355,17 @@
          <StoreContext.Consumer>
            {(store) => {
              const state = store.getState()
-             const cards = state.auction.cards
 
-             return <Cards cards={cards} store={store} />
+             const stateToProps = {
+               cards: state.auction.cards
+             }
+
+             return <Cards {...stateToProps} />
            }}
       </StoreContext.Consumer>)
 
       }
-        function Cards ({ cards , store={store} }) {
+        function Cards ({ cards }) {
         if (cards === null) {
             return <div className="cards">
               <Loading />
@@ -361,28 +374,31 @@
         return (
           <div className="cards">
             {
-              cards.map((card) => <CardConnected key={card.id}  store={store} card={card} />)
+              cards.map((card) => <CardConnected key={card.id}   card={card} />)
             }
           </div>
         )
        }
 
-       function CardConnected({card, store}) {
+       function CardConnected(props) {
          return(
            <StoreContext.Consumer>
              {(store) => {
                const dispatch = store.dispatch
-               const favorite = (id) => {
-                 api.post(`/cards/${id}/favorite`).then(() =>{
-                   dispatch(favoriteCard(id))
-                 })
+
+               const dispatchToProps = {
+                 favorite: (id) => {
+                   api.post(`/cards/${id}/favorite`).then(() => {
+                     dispatch(favoriteCard(id))
+                   })
+                 },
+                 unfavorite: (id) => {
+                   api.post(`/cards/${id}/unfavorite`).then(() => {
+                     dispatch(unfavoriteCard(id))
+                   })
+                 }
                }
-               const unfavorite = (id) => {
-                 api.post(`/cards/${id}/unfavorite`).then(() =>{
-                   dispatch(unfavoriteCard(id))
-                 })
-               }
-               return <Card  card={card} favorite={favorite} unfavorite={unfavorite} />
+               return <Card {...props} {...dispatchToProps}/>
              }}
            </StoreContext.Consumer>)
        }
