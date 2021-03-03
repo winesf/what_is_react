@@ -11,6 +11,7 @@
     <script src="https://unpkg.com/babel-standalone@6/babel.js"></script>
 <!--    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>-->
     <script src="https://unpkg.com/redux@4/dist/redux.js"></script>
+    <script src="https://unpkg.com/react-redux@7/dist/react-redux.js"></script>
 <!--    icons-->
     <script src="https://unpkg.com/ionicons@5.4.0/dist/ionicons.js"></script>
 <!--    Tests-->
@@ -222,13 +223,29 @@
                 {(store) => {
                   // store.subscribe(() => {
                   //   this.renender()
-                  // })
-                  const state = store.getState()
-                  const dispatch = store.dispatch
+                  // }
+                  return React.createElement (
+                    class extends React.Component {
+                        render() {
+                          const state = store.getState()
+                          const dispatch = store.dispatch
 
-                  const stateToProps = mapStateToProps ? mapStateToProps(state) : {}
-                  const dispatchToProps = mapDispatchToProps ? mapDispatchToProps(dispatch) : {}
-                  return <WrappedComponent {...props} {...stateToProps} {...dispatchToProps} />
+                          const stateToProps = mapStateToProps ? mapStateToProps(state) : {}
+                          const dispatchToProps = mapDispatchToProps ? mapDispatchToProps(dispatch) : {}
+                          return <WrappedComponent {...this.props} {...stateToProps} {...dispatchToProps} />
+                        }
+                        componentDidMount () {
+                          this.unsubscribe = store.subscribe(this.handleChange.bind(this))
+                        }
+                        componentWillUnmount () {
+                            this.unsubscribe()
+                        }
+                        handleChange () {
+                          this.forceUpdate()
+                        }
+                    }
+                    ,props
+                  )
                 }}
               </StoreContext.Consumer>
             )
@@ -275,16 +292,18 @@
       })
 
 
+
+
+     class Clock extends React.Component {
+       render() {
+         return (
+           <div className="clock">
+             <span className="value" children={this.props.date.toLocaleTimeString()}></span>
+           </div>
+         )
+       }
+     }
       const ClockConnected = connect(clockMapStateToProps)(Clock)
-
-
-      function Clock ({date}) {
-       const isDay = date.getHours() >=7 && date.getHours() <= 21
-        return <div className="clock">
-          <span className="value" children={date.toLocaleTimeString()}></span>
-          <span className={isDay ? 'icon day' : 'icon night'}></span>
-        </div>
-      }
 
       function Loading () {
         return <div className="card is-loading">
