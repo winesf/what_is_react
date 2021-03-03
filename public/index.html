@@ -221,7 +221,7 @@
 
       function CardTable({ cards, favorite, unfavorite}) {
         if (cards === null) {
-          return <Loading />
+          return 1
         }
         return (
           <table className="container">
@@ -306,14 +306,14 @@
         return (
           <div className="cards">
             {
-              cards.map((card) => <Card card={card} key={card.id} favorite={favorite} unfavorite={unfavorite} />)
+              cards.map((card) => <Card key={card.id} card={card}  favorite={favorite} unfavorite={unfavorite} />)
             }
           </div>
         )
        }
 
-        function Card ({card, key, favorite ,unfavorite }) {
-        return <article className={'card' + (card.favorite ? ' favorite' : '')} key={key}>
+        function Card ({card,  favorite ,unfavorite }) {
+        return <article className={'card' + (card.favorite ? ' favorite' : '')} >
           <div className="image">
             <img src={card.img} alt={card.name}/>
           </div>
@@ -448,14 +448,15 @@
 
       function renderView(store) {
         const state = store.getState()
+        const dispatch = store.dispatch
         const favorite = (id) => {
           api.post(`/cards/${id}/favorite`).then(() =>{
-            store.dispatch(favoriteCard(id))
+            dispatch(favoriteCard(id))
           })
         }
         const unfavorite = (id) => {
           api.post(`/cards/${id}/unfavorite`).then(() =>{
-            store.dispatch(unfavoriteCard(id))
+            dispatch(unfavoriteCard(id))
           })
         }
 
