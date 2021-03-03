@@ -208,13 +208,14 @@
       }))
 
 // #############View##################
-      function App({ state, favorite, unfavorite }) {
+
+      function App({date, cards, favorite, unfavorite }) {
         return (
           <div className="app">
             <Header menu={{hello:'world'}} />
-            <Clock time={state.clock.date} />
-            <Cards cards={state.auction.cards} favorite={favorite} unfavorite={unfavorite} />
-            <CardTable cards={state.auction.cards} favorite={favorite} unfavorite={unfavorite} />
+            <Clock date={date} />
+            <Cards cards={cards} favorite={favorite} unfavorite={unfavorite} />
+            <CardTable cards={cards} favorite={favorite} unfavorite={unfavorite} />
           </div>
         )
       }
@@ -277,10 +278,10 @@
         </nav>
        }
 
-      function Clock ({time}) {
-       const isDay = time.getHours() >=7 && time.getHours() <= 21
+      function Clock ({date}) {
+       const isDay = date.getHours() >=7 && date.getHours() <= 21
         return <div className="clock">
-          <span className="value" children={time.toLocaleTimeString()}></span>
+          <span className="value" children={date.toLocaleTimeString()}></span>
           <span className={isDay ? 'icon day' : 'icon night'}></span>
         </div>
       }
@@ -449,6 +450,9 @@
       function renderView(store) {
         const state = store.getState()
         const dispatch = store.dispatch
+        const date = state.clock.date
+        const cards = state.auction.cards
+
         const favorite = (id) => {
           api.post(`/cards/${id}/favorite`).then(() =>{
             dispatch(favoriteCard(id))
@@ -461,7 +465,7 @@
         }
 
         ReactDOM.render(
-          <App state={state} favorite={favorite} unfavorite={unfavorite} />,
+          <App date={date} cards={cards} favorite={favorite} unfavorite={unfavorite} />,
           document.getElementById('root')
         )
       }
