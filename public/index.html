@@ -14,9 +14,9 @@
 <!--    icons-->
     <script src="https://unpkg.com/ionicons@5.4.0/dist/ionicons.js"></script>
 <!--    Tests-->
-    <script src="https://unpkg.com/mocha@8/mocha.js"></script>
-    <link href="https://unpkg.com/mocha@8/mocha.css" rel="stylesheet">
-    <script src="https://unpkg.com/chai@2/chai.js"></script>
+<!--    <script src="https://unpkg.com/mocha@8/mocha.js"></script>-->
+<!--    <link href="https://unpkg.com/mocha@8/mocha.css" rel="stylesheet">-->
+<!--    <script src="https://unpkg.com/chai@2/chai.js"></script>-->
 </head>
 <body>
 
@@ -104,7 +104,6 @@
         }
       }
 
-
       const SET_CARDS = 'SET_CARDS'
       const CHANGE_CARD_PRICE = 'CHANGE_CARD_PRICE'
       const FAVORITE_CARD = 'FAVORITE_CARD'
@@ -164,7 +163,6 @@
         }
       }
 
-
       //Action creator
       function setTime(date) {
         return {
@@ -213,35 +211,45 @@
         auction: auctionReducer
       }))
 
-// #############View##################
+      // #############View##################
+      const  StoreContext = React.createContext()
+      // #############View##################
 
-      function App({store }) {
+      function App() {
         return (
           <div className="app">
             <Header menu={{hello:'world'}} />
-            <ClockContainer store={store} />
-            <CardsContainer store={store} />
-            <CardTableContainer store={store} />
+            <ClockContainer  />
+            <CardsContainer  />
+            <CardTableContainer />
           </div>
         )
       }
 
-      function CardTableContainer({store}) {
-        const state = store.getState()
-        const dispatch = store.dispatch
+      function CardTableContainer() {
+        return (
+          <StoreContext.Consumer>
+            {(store) => {
+              const state = store.getState()
+              const dispatch = store.dispatch
 
-        const cards = state.auction.cards
-        const favorite = (id) => {
-          api.post(`/cards/${id}/favorite`).then(() =>{
-            dispatch(favoriteCard(id))
-          })
-        }
-        const unfavorite = (id) => {
-          api.post(`/cards/${id}/unfavorite`).then(() =>{
-            dispatch(unfavoriteCard(id))
-          })
-        }
-        return <CardTable cards={cards} favorite={favorite} unfavorite={unfavorite} />
+              const cards = state.auction.cards
+              const favorite = (id) => {
+                api.post(`/cards/${id}/favorite`).then(() =>{
+                  dispatch(favoriteCard(id))
+                })
+              }
+              const unfavorite = (id) => {
+                api.post(`/cards/${id}/unfavorite`).then(() =>{
+                  dispatch(unfavoriteCard(id))
+                })
+              }
+              return <CardTable cards={cards} favorite={favorite} unfavorite={unfavorite} />
+
+            }}
+          </StoreContext.Consumer>
+        )
+
       }
       function CardTable({ cards, favorite, unfavorite}) {
         if (cards === null) {
@@ -287,7 +295,6 @@
 
       function Logo () {
         return <img className="logo" src="img/logo.png" alt="логотип" width="150" height="70" />
-        // return VDom.createElement('img', {className: 'logo',src: 'img/logo.png',alt: 'логотип', width: 150, height: 70})
         }
 
       function Nav(menu) {
@@ -301,11 +308,16 @@
         </nav>
        }
 
-      function ClockContainer ({ store }) {
-        const state = store.getState()
-        const date = state.clock.date
-
-        return <Clock date={date} />
+      function ClockContainer () {
+        return (
+          <StoreContext.Consumer>
+            {(store) => {
+              const state = store.getState()
+              const date = state.clock.date
+              return <Clock date={date} />
+            }}
+          </StoreContext.Consumer>
+        )
       }
       function Clock ({date}) {
        const isDay = date.getHours() >=7 && date.getHours() <= 21
@@ -315,58 +327,6 @@
         </div>
       }
 
-      // ###########################
-        mocha.setup('bdd');
-      const assert = chai.assert;
-
-      describe('Clock', () => {
-        it('Render time of day', () => {
-          const container = document.createElement('div')
-
-
-          //redux-mock-store
-
-
-          ReactDOM.render(
-            <Clock date={new Date('2021-10-19T13:12:31')} />
-            ,container
-          )
-
-          const clock = container.querySelector('.clock')
-
-          assert.equal(clock.querySelector('.value').innerText, '1:12:31 PM')
-          assert.equal(clock.querySelector('.icon').className, 'icon day')
-        })
-
-        it('time of night', () => {
-          const container = document.createElement('div')
-
-          ReactDOM.render(
-            <Clock date={new Date('2021-10-19T03:12:31')} />
-            ,container
-          )
-
-          const clock = container.querySelector('.clock')
-
-          assert.equal(clock.querySelector('.value').innerText, '3:12:31 AM')
-          assert.equal(clock.querySelector('.icon').className, 'icon night')
-        })
-
-        it("ClockContainer", () => {
-          const container = document.createElement('div')
-          const store = Redux.createStore((state) => state, {
-            clock: {
-              date:new Date('2021-10-19T13:12:31')
-            }
-          })
-          ReactDOM.render(
-            <ClockContainer store={store} />,
-            container
-          )
-        })
-      })
-      mocha.run()
-      // ###########################
       function Loading () {
         return <div className="card is-loading">
           <div className="image">
@@ -380,11 +340,17 @@
         </div>
       }
 
-      function CardsContainer ({store}) {
-        const state = store.getState()
-        const cards = state.auction.cards
+      function CardsContainer () {
+       return(
+         <StoreContext.Consumer>
+           {(store) => {
+             const state = store.getState()
+             const cards = state.auction.cards
 
-        return <Cards cards={cards} store={store} />
+             return <Cards cards={cards} store={store} />
+           }}
+      </StoreContext.Consumer>)
+
       }
         function Cards ({ cards , store={store} }) {
         if (cards === null) {
@@ -402,19 +368,23 @@
        }
 
        function CardConnected({card, store}) {
-         const dispatch = store.dispatch
-         const favorite = (id) => {
-           api.post(`/cards/${id}/favorite`).then(() =>{
-             dispatch(favoriteCard(id))
-           })
-         }
-         const unfavorite = (id) => {
-           api.post(`/cards/${id}/unfavorite`).then(() =>{
-             dispatch(unfavoriteCard(id))
-           })
-         }
-
-         return <Card  card={card} favorite={favorite} unfavorite={unfavorite} />
+         return(
+           <StoreContext.Consumer>
+             {(store) => {
+               const dispatch = store.dispatch
+               const favorite = (id) => {
+                 api.post(`/cards/${id}/favorite`).then(() =>{
+                   dispatch(favoriteCard(id))
+                 })
+               }
+               const unfavorite = (id) => {
+                 api.post(`/cards/${id}/unfavorite`).then(() =>{
+                   dispatch(unfavoriteCard(id))
+                 })
+               }
+               return <Card  card={card} favorite={favorite} unfavorite={unfavorite} />
+             }}
+           </StoreContext.Consumer>)
        }
         function Card ({card,  favorite ,unfavorite }) {
         return <article   className={'card' + (card.favorite ? ' favorite' : '')} >
@@ -432,10 +402,7 @@
              />
           </div>
         </article>
-
-          }
-
-
+      }
 
         function FavoriteBtn ({ active, unfavorite, favorite  }) {
         return active
@@ -447,9 +414,6 @@
         }
 
 // #################render##############
-
-
-
 
       function render(virtualDom, realDomRoot) {
         const evaluatedVirtualDom = evaluate(virtualDom);
@@ -549,10 +513,11 @@
       }
 // #################
 
-
       function renderView(store) {
         ReactDOM.render(
-          <App store={store} />,
+          <StoreContext.Provider value={store}>
+             <App />
+          </StoreContext.Provider>,
           document.getElementById('root')
         )
       }
@@ -563,11 +528,7 @@
 
       renderView(store)
 
-
       //  ######Events########
-
-
-
       setInterval(() => {
        store.dispatch(setTime(new Date()))
       }, 1000)
@@ -582,8 +543,6 @@
             })
           })
         })
-
-
    </script>
 
 </body>
