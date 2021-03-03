@@ -214,42 +214,123 @@
       // #############View##################
       const  StoreContext = React.createContext()
       // #############View##################
+      function connect(mapStateToProps,mapDispatchToProps, WrappedComponent) {
+        return (props) => {
+          return (
+            <StoreContext.Consumer>
+              {(store) => {
+                const state = store.getState()
+                const dispatch = store.dispatch
 
+                const stateToProps = mapStateToProps ? mapStateToProps(state) : {}
+                const dispatchToProps = mapDispatchToProps ? mapDispatchToProps(dispatch) : {}
+                return <WrappedComponent {...props} {...stateToProps} {...dispatchToProps} />
+              }}
+            </StoreContext.Consumer>
+          )
+        }
+      }
+      // #############View##################
       function App() {
         return (
           <div className="app">
             <Header menu={{hello:'world'}} />
             <ClockConnected />
-            <CardsContainer  />
-            <CardTableContainer />
+            <CardsConnected  />
+            <CardsTableConnect />
           </div>
         )
       }
 
-      function CardTableContainer() {
+
+
+
+      function Header (menu) {
+        return <header className="header">
+          <Logo />
+          <Nav menu={menu} />
+        </header>
+      }
+
+
+      function Logo () {
+        return <img className="logo" src="img/logo.png" alt="логотип" width="150" height="70" />
+        }
+
+      function Nav(menu) {
+        const listmenu = menu['menu']['menu']
+        return <nav className="header__nav">
+          <ul className="nav__list">
+            <li className="nav__item">
+              <a href="#">Hello</a>
+            </li>
+          </ul>
+        </nav>
+       }
+
+      const clockMapStateToProps = (state) => ({
+        date:state.clock.date
+      })
+
+
+      const ClockConnected = connect(clockMapStateToProps,null ,Clock)
+
+
+      function Clock ({date}) {
+       const isDay = date.getHours() >=7 && date.getHours() <= 21
+        return <div className="clock">
+          <span className="value" children={date.toLocaleTimeString()}></span>
+          <span className={isDay ? 'icon day' : 'icon night'}></span>
+        </div>
+      }
+
+      function Loading () {
+        return <div className="card is-loading">
+          <div className="image">
+            <img src="" alt=""/>
+          </div>
+          <div className="content">
+           <div className="price"></div>
+            <h1></h1>
+            <p></p>
+          </div>
+        </div>
+      }
+
+      function Cards ({ cards }) {
+        if (cards === null) {
+            return <div className="cards">
+              <Loading />
+            </div>
+        }
         return (
-          <StoreContext.Consumer>
-            {(store) => {
-              const state = store.getState()
-              const dispatch = store.dispatch
-
-              const cards = state.auction.cards
-              const favorite = (id) => {
-                api.post(`/cards/${id}/favorite`).then(() =>{
-                  dispatch(favoriteCard(id))
-                })
-              }
-              const unfavorite = (id) => {
-                api.post(`/cards/${id}/unfavorite`).then(() =>{
-                  dispatch(unfavoriteCard(id))
-                })
-              }
-              return <CardTable cards={cards} favorite={favorite} unfavorite={unfavorite} />
-
-            }}
-          </StoreContext.Consumer>
+          <div className="cards">
+            {
+              cards.map((card) => <CardConnected key={card.id}   card={card} />)
+            }
+          </div>
         )
+       }
+      const cardsMapStateToProps = (state) => ({cards: state.auction.cards })
+      const CardsConnected = connect(cardsMapStateToProps,null,Cards)
 
+
+        function Card ({card,  favorite ,unfavorite }) {
+        return <article   className={'card' + (card.favorite ? ' favorite' : '')} >
+          <div className="image">
+            <img src={card.img} alt={card.name}/>
+          </div>
+          <div className="content">
+            <div className="price">{card.price}</div>
+            <h1>{card.name}</h1>
+            <p>{card.description}</p>
+             <FavoriteBtn
+               active={card.favorite}
+               favorite={ () => favorite(card.id)}
+               unfavorite={() => unfavorite(card.id)}
+             />
+          </div>
+        </article>
       }
       function CardTable({ cards, favorite, unfavorite}) {
         if (cards === null) {
@@ -285,142 +366,22 @@
           </table>
         )
       }
-
-      function Header (menu) {
-        return <header className="header">
-          <Logo />
-          <Nav menu={menu} />
-        </header>
-      }
-
-
-      function Logo () {
-        return <img className="logo" src="img/logo.png" alt="логотип" width="150" height="70" />
-        }
-
-      function Nav(menu) {
-        const listmenu = menu['menu']['menu']
-        return <nav className="header__nav">
-          <ul className="nav__list">
-            <li className="nav__item">
-              <a href="#">Hello</a>
-            </li>
-          </ul>
-        </nav>
+     const cardMapDispatchToProps = (dispatch) => ({
+         favorite: (id) => {
+           api.post(`/cards/${id}/favorite`).then(() => {
+             dispatch(favoriteCard(id))
+           })
+         },
+         unfavorite: (id) => {
+           api.post(`/cards/${id}/unfavorite`).then(() => {
+             dispatch(unfavoriteCard(id))
+           })
        }
+     })
+      const CardConnected = connect(null, cardMapDispatchToProps, Card)
+      const CardsTableConnect = connect(cardsMapStateToProps, cardMapDispatchToProps, CardTable)
 
-      const clockMapStateToProps = (state) => ({
-        date:state.clock.date
-      })
-
-      function connect(mapStateToProps, WrappedComponent) {
-        return () => {
-         return (
-           <StoreContext.Consumer>
-             {(store) => {
-               const state = store.getState()
-               const stateToProps = mapStateToProps(state)
-               return <WrappedComponent {...stateToProps} />
-             }}
-           </StoreContext.Consumer>
-         )
-        }
-      }
-      const ClockConnected = connect(clockMapStateToProps, Clock)
-
-
-      function Clock ({date}) {
-       const isDay = date.getHours() >=7 && date.getHours() <= 21
-        return <div className="clock">
-          <span className="value" children={date.toLocaleTimeString()}></span>
-          <span className={isDay ? 'icon day' : 'icon night'}></span>
-        </div>
-      }
-
-      function Loading () {
-        return <div className="card is-loading">
-          <div className="image">
-            <img src="" alt=""/>
-          </div>
-          <div className="content">
-           <div className="price"></div>
-            <h1></h1>
-            <p></p>
-          </div>
-        </div>
-      }
-
-      function CardsContainer () {
-       return(
-         <StoreContext.Consumer>
-           {(store) => {
-             const state = store.getState()
-
-             const stateToProps = {
-               cards: state.auction.cards
-             }
-
-             return <Cards {...stateToProps} />
-           }}
-      </StoreContext.Consumer>)
-
-      }
-        function Cards ({ cards }) {
-        if (cards === null) {
-            return <div className="cards">
-              <Loading />
-            </div>
-        }
-        return (
-          <div className="cards">
-            {
-              cards.map((card) => <CardConnected key={card.id}   card={card} />)
-            }
-          </div>
-        )
-       }
-
-       function CardConnected(props) {
-         return(
-           <StoreContext.Consumer>
-             {(store) => {
-               const dispatch = store.dispatch
-
-               const dispatchToProps = {
-                 favorite: (id) => {
-                   api.post(`/cards/${id}/favorite`).then(() => {
-                     dispatch(favoriteCard(id))
-                   })
-                 },
-                 unfavorite: (id) => {
-                   api.post(`/cards/${id}/unfavorite`).then(() => {
-                     dispatch(unfavoriteCard(id))
-                   })
-                 }
-               }
-               return <Card {...props} {...dispatchToProps}/>
-             }}
-           </StoreContext.Consumer>)
-       }
-        function Card ({card,  favorite ,unfavorite }) {
-        return <article   className={'card' + (card.favorite ? ' favorite' : '')} >
-          <div className="image">
-            <img src={card.img} alt={card.name}/>
-          </div>
-          <div className="content">
-            <div className="price">{card.price}</div>
-            <h1>{card.name}</h1>
-            <p>{card.description}</p>
-             <FavoriteBtn
-               active={card.favorite}
-               favorite={ () => favorite(card.id)}
-               unfavorite={() => unfavorite(card.id)}
-             />
-          </div>
-        </article>
-      }
-
-        function FavoriteBtn ({ active, unfavorite, favorite  }) {
+      function FavoriteBtn ({ active, unfavorite, favorite  }) {
         return active
           ? <button type="button" onClick={unfavorite} className="button">
             <span><ion-icon name="heart-sharp" /> Unfavorite</span></button>
