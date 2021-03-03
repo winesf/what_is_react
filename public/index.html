@@ -12,6 +12,7 @@
 <!--    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>-->
     <script src="https://unpkg.com/redux@4/dist/redux.js"></script>
     <script src="https://unpkg.com/react-redux@7/dist/react-redux.js"></script>
+    <script src="https://unpkg.com/redux-thunk@2/dist/redux-thunk.js"></script>
 <!--    icons-->
     <script src="https://unpkg.com/ionicons@5.4.0/dist/ionicons.js"></script>
 <!--    Tests-->
@@ -198,61 +199,44 @@
         }
       }
 
-      function combineReducers(reducers) {
-        return (state = {}, action) => {
-          const result = {};
-          Object.entries(reducers).forEach(([key,reducer]) => {
-            result[key] = reducer(state[key], action)
+      // #############Store##################
+      function favoriteAsync (id) {
+        return (dispatch) => {
+          api.post(`/cards/${id}/favorite`).then(() => {
+            dispatch(favoriteCard(id))
           })
-          return result
         }
       }
-      const store = Redux.createStore(combineReducers({
+      function unfavoriteAsync (id) {
+        return (dispatch) => {
+          api.post(`/cards/${id}/unfavorite`).then(() => {
+            dispatch(unfavoriteCard(id))
+          })
+        }
+      }
+     // function functionalActionSupport ({ dispatch }) {
+     //    return function (next) {
+     //      return function (action) {
+     //        if (typeof  action === 'function') {
+     //          return action(dispatch)
+     //        }
+     //        return next(action);
+     //      }
+     //    }
+     // }
+
+     const thunk = ReduxThunk.default
+      const store = Redux.createStore(
+        Redux.combineReducers({
         clock: clockReducer,
         auction: auctionReducer
-      }))
+      }),
+      Redux.applyMiddleware(thunk)
+      )
 
       // #############View##################
       const  StoreContext = React.createContext()
-      // #############View##################
-      function connect(mapStateToProps,mapDispatchToProps ) {
-        return (WrappedComponent) => {
-          return (props) => {
-            return (
-              <StoreContext.Consumer>
-                {(store) => {
-                  // store.subscribe(() => {
-                  //   this.renender()
-                  // }
-                  return React.createElement (
-                    class extends React.Component {
-                        render() {
-                          const state = store.getState()
-                          const dispatch = store.dispatch
 
-                          const stateToProps = mapStateToProps ? mapStateToProps(state) : {}
-                          const dispatchToProps = mapDispatchToProps ? mapDispatchToProps(dispatch) : {}
-                          return <WrappedComponent {...this.props} {...stateToProps} {...dispatchToProps} />
-                        }
-                        componentDidMount () {
-                          this.unsubscribe = store.subscribe(this.handleChange.bind(this))
-                        }
-                        componentWillUnmount () {
-                            this.unsubscribe()
-                        }
-                        handleChange () {
-                          this.forceUpdate()
-                        }
-                    }
-                    ,props
-                  )
-                }}
-              </StoreContext.Consumer>
-            )
-          }
-        }
-      }
-      // #############View##################
       function App() {
         return (
           <div className="app">
@@ -287,12 +271,6 @@
         </nav>
        }
 
-      const clockMapStateToProps = (state) => ({
-        date:state.clock.date
-      })
-
-
-
 
      class Clock extends React.Component {
        render() {
@@ -303,7 +281,8 @@
          )
        }
      }
-      const ClockConnected = connect(clockMapStateToProps)(Clock)
+      const clockMapStateToProps = (state) => ({date:state.clock.date})
+      const ClockConnected = ReactRedux.connect(clockMapStateToProps)(Clock)
 
       function Loading () {
         return <div className="card is-loading">
@@ -317,6 +296,7 @@
           </div>
         </div>
       }
+
 
       function Cards ({ cards }) {
         if (cards === null) {
@@ -333,7 +313,7 @@
         )
        }
       const cardsMapStateToProps = (state) => ({cards: state.auction.cards })
-      const CardsConnected = connect(cardsMapStateToProps)(Cards)
+      const CardsConnected = ReactRedux.connect(cardsMapStateToProps)(Cards)
 
 
         function Card ({card,  favorite ,unfavorite }) {
@@ -353,6 +333,10 @@
           </div>
         </article>
       }
+      const cardMapDispatchToProps = {favorite: favoriteAsync , unfavorite: unfavoriteAsync}
+      const CardConnected = ReactRedux.connect(null,cardMapDispatchToProps)(Card)
+
+
       function CardTable({ cards, favorite, unfavorite}) {
         if (cards === null) {
           return 1
@@ -386,23 +370,23 @@
             </tbody>
           </table>
         )
-      }
-     const cardMapDispatchToProps = (dispatch) => ({
-         favorite: (id) => {
-           api.post(`/cards/${id}/favorite`).then(() => {
-             dispatch(favoriteCard(id))
-           })
-         },
-         unfavorite: (id) => {
-           api.post(`/cards/${id}/unfavorite`).then(() => {
-             dispatch(unfavoriteCard(id))
-           })
-       }
-     })
-      // const enhance = connect(null, cardMapDispatchToProps)
-      // const CardConnected = enhance(Card)
-      const CardConnected = connect( cardMapDispatchToProps)(Card)
-      const CardsTableConnect = connect(cardsMapStateToProps, cardMapDispatchToProps)(CardTable)
+      } const CardsTableConnect = ReactRedux.connect(cardsMapStateToProps, cardMapDispatchToProps)(CardTable)
+     // const cardMapDispatchToProps = (dispatch) => ({
+     //     favorite: (id) => {
+     //       api.post(`/cards/${id}/favorite`).then(() => {
+     //         dispatch(favoriteCard(id))
+     //       })
+     //     },
+     //     unfavorite: (id) => {
+     //       api.post(`/cards/${id}/unfavorite`).then(() => {
+     //         dispatch(unfavoriteCard(id))
+     //       })
+     //   }
+     // })
+
+
+
+
 
       function FavoriteBtn ({ active, unfavorite, favorite  }) {
         return active
@@ -515,9 +499,9 @@
 
       function renderView(store) {
         ReactDOM.render(
-          <StoreContext.Provider value={store}>
+          <ReactRedux.Provider store={store}>
              <App />
-          </StoreContext.Provider>,
+          </ReactRedux.Provider>,
           document.getElementById('root')
         )
       }
