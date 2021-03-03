@@ -11,6 +11,8 @@
     <script src="https://unpkg.com/babel-standalone@6/babel.js"></script>
 <!--    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>-->
     <script src="https://unpkg.com/redux@4/dist/redux.js"></script>
+    <script src="https://unpkg.com/react-redux@7/dist/react-redux.js"></script>
+    <script src="https://unpkg.com/redux-thunk@2/dist/redux-thunk.js"></script>
 <!--    icons-->
     <script src="https://unpkg.com/ionicons@5.4.0/dist/ionicons.js"></script>
 <!--    Tests-->
@@ -197,60 +199,144 @@
         }
       }
 
-      function combineReducers(reducers) {
-        return (state = {}, action) => {
-          const result = {};
-          Object.entries(reducers).forEach(([key,reducer]) => {
-            result[key] = reducer(state[key], action)
+      // #############Store##################
+      function favoriteAsync (id) {
+        return (dispatch,getState, api) => {
+          api.post(`/cards/${id}/favorite`).then(() => {
+            dispatch(favoriteCard(id))
           })
-          return result
         }
       }
-      const store = Redux.createStore(combineReducers({
+      function unfavoriteAsync (id) {
+        return (dispatch,getState, {api}) => {
+          api.post(`/cards/${id}/unfavorite`).then(() => {
+            dispatch(unfavoriteCard(id))
+          })
+        }
+      }
+     // function functionalActionSupport ({ dispatch }) {
+     //    return function (next) {
+     //      return function (action) {
+     //        if (typeof  action === 'function') {
+     //          return action(dispatch)
+     //        }
+     //        return next(action);
+     //      }
+     //    }
+     // }
+
+     const thunk = ReduxThunk.default
+      const store = Redux.createStore(
+        Redux.combineReducers({
         clock: clockReducer,
         auction: auctionReducer
-      }))
+      }),
+      Redux.applyMiddleware(thunk.withExtraArgument({ api }))
+      )
 
       // #############View##################
       const  StoreContext = React.createContext()
-      // #############View##################
 
       function App() {
         return (
           <div className="app">
             <Header menu={{hello:'world'}} />
-            <ClockContainer  />
-            <CardsContainer  />
-            <CardTableContainer />
+            <ClockConnected />
+            <CardsConnected  />
+            <CardsTableConnect />
           </div>
         )
       }
 
-      function CardTableContainer() {
-        return (
-          <StoreContext.Consumer>
-            {(store) => {
-              const state = store.getState()
-              const dispatch = store.dispatch
-
-              const cards = state.auction.cards
-              const favorite = (id) => {
-                api.post(`/cards/${id}/favorite`).then(() =>{
-                  dispatch(favoriteCard(id))
-                })
-              }
-              const unfavorite = (id) => {
-                api.post(`/cards/${id}/unfavorite`).then(() =>{
-                  dispatch(unfavoriteCard(id))
-                })
-              }
-              return <CardTable cards={cards} favorite={favorite} unfavorite={unfavorite} />
-
-            }}
-          </StoreContext.Consumer>
-        )
-
+      function Header (menu) {
+        return <header className="header">
+          <Logo />
+          <Nav menu={menu} />
+        </header>
       }
+
+
+      function Logo () {
+        return <img className="logo" src="img/logo.png" alt="логотип" width="150" height="70" />
+        }
+
+      function Nav(menu) {
+        const listmenu = menu['menu']['menu']
+        return <nav className="header__nav">
+          <ul className="nav__list">
+            <li className="nav__item">
+              <a href="#">Hello</a>
+            </li>
+          </ul>
+        </nav>
+       }
+
+
+     class Clock extends React.Component {
+       render() {
+         return (
+           <div className="clock">
+             <span className="value" children={this.props.date.toLocaleTimeString()}></span>
+           </div>
+         )
+       }
+     }
+      const clockMapStateToProps = (state) => ({date:state.clock.date})
+      const ClockConnected = ReactRedux.connect(clockMapStateToProps)(Clock)
+
+      function Loading () {
+        return <div className="card is-loading">
+          <div className="image">
+            <img src="" alt=""/>
+          </div>
+          <div className="content">
+           <div className="price"></div>
+            <h1></h1>
+            <p></p>
+          </div>
+        </div>
+      }
+
+
+      function Cards ({ cards }) {
+        if (cards === null) {
+            return <div className="cards">
+              <Loading />
+            </div>
+        }
+        return (
+          <div className="cards">
+            {
+              cards.map((card) => <CardConnected key={card.id}   card={card} />)
+            }
+          </div>
+        )
+       }
+      const cardsMapStateToProps = (state) => ({cards: state.auction.cards })
+      const CardsConnected = ReactRedux.connect(cardsMapStateToProps)(Cards)
+
+
+        function Card ({card,  favorite ,unfavorite }) {
+        return <article   className={'card' + (card.favorite ? ' favorite' : '')} >
+          <div className="image">
+            <img src={card.img} alt={card.name}/>
+          </div>
+          <div className="content">
+            <div className="price">{card.price}</div>
+            <h1>{card.name}</h1>
+            <p>{card.description}</p>
+             <FavoriteBtn
+               active={card.favorite}
+               favorite={ () => favorite(card.id)}
+               unfavorite={() => unfavorite(card.id)}
+             />
+          </div>
+        </article>
+      }
+      const cardMapDispatchToProps = {favorite: favoriteAsync , unfavorite: unfavoriteAsync}
+      const CardConnected = ReactRedux.connect(null,cardMapDispatchToProps)(Card)
+
+
       function CardTable({ cards, favorite, unfavorite}) {
         if (cards === null) {
           return 1
@@ -284,127 +370,25 @@
             </tbody>
           </table>
         )
-      }
+      } const CardsTableConnect = ReactRedux.connect(cardsMapStateToProps, cardMapDispatchToProps)(CardTable)
+     // const cardMapDispatchToProps = (dispatch) => ({
+     //     favorite: (id) => {
+     //       api.post(`/cards/${id}/favorite`).then(() => {
+     //         dispatch(favoriteCard(id))
+     //       })
+     //     },
+     //     unfavorite: (id) => {
+     //       api.post(`/cards/${id}/unfavorite`).then(() => {
+     //         dispatch(unfavoriteCard(id))
+     //       })
+     //   }
+     // })
 
-      function Header (menu) {
-        return <header className="header">
-          <Logo />
-          <Nav menu={menu} />
-        </header>
-      }
 
-      function Logo () {
-        return <img className="logo" src="img/logo.png" alt="логотип" width="150" height="70" />
-        }
 
-      function Nav(menu) {
-        const listmenu = menu['menu']['menu']
-        return <nav className="header__nav">
-          <ul className="nav__list">
-            <li className="nav__item">
-              <a href="#">Hello</a>
-            </li>
-          </ul>
-        </nav>
-       }
 
-      function ClockContainer () {
-        return (
-          <StoreContext.Consumer>
-            {(store) => {
-              const state = store.getState()
-              const date = state.clock.date
-              return <Clock date={date} />
-            }}
-          </StoreContext.Consumer>
-        )
-      }
-      function Clock ({date}) {
-       const isDay = date.getHours() >=7 && date.getHours() <= 21
-        return <div className="clock">
-          <span className="value" children={date.toLocaleTimeString()}></span>
-          <span className={isDay ? 'icon day' : 'icon night'}></span>
-        </div>
-      }
 
-      function Loading () {
-        return <div className="card is-loading">
-          <div className="image">
-            <img src="" alt=""/>
-          </div>
-          <div className="content">
-           <div className="price"></div>
-            <h1></h1>
-            <p></p>
-          </div>
-        </div>
-      }
-
-      function CardsContainer () {
-       return(
-         <StoreContext.Consumer>
-           {(store) => {
-             const state = store.getState()
-             const cards = state.auction.cards
-
-             return <Cards cards={cards} store={store} />
-           }}
-      </StoreContext.Consumer>)
-
-      }
-        function Cards ({ cards , store={store} }) {
-        if (cards === null) {
-            return <div className="cards">
-              <Loading />
-            </div>
-        }
-        return (
-          <div className="cards">
-            {
-              cards.map((card) => <CardConnected key={card.id}  store={store} card={card} />)
-            }
-          </div>
-        )
-       }
-
-       function CardConnected({card, store}) {
-         return(
-           <StoreContext.Consumer>
-             {(store) => {
-               const dispatch = store.dispatch
-               const favorite = (id) => {
-                 api.post(`/cards/${id}/favorite`).then(() =>{
-                   dispatch(favoriteCard(id))
-                 })
-               }
-               const unfavorite = (id) => {
-                 api.post(`/cards/${id}/unfavorite`).then(() =>{
-                   dispatch(unfavoriteCard(id))
-                 })
-               }
-               return <Card  card={card} favorite={favorite} unfavorite={unfavorite} />
-             }}
-           </StoreContext.Consumer>)
-       }
-        function Card ({card,  favorite ,unfavorite }) {
-        return <article   className={'card' + (card.favorite ? ' favorite' : '')} >
-          <div className="image">
-            <img src={card.img} alt={card.name}/>
-          </div>
-          <div className="content">
-            <div className="price">{card.price}</div>
-            <h1>{card.name}</h1>
-            <p>{card.description}</p>
-             <FavoriteBtn
-               active={card.favorite}
-               favorite={ () => favorite(card.id)}
-               unfavorite={() => unfavorite(card.id)}
-             />
-          </div>
-        </article>
-      }
-
-        function FavoriteBtn ({ active, unfavorite, favorite  }) {
+      function FavoriteBtn ({ active, unfavorite, favorite  }) {
         return active
           ? <button type="button" onClick={unfavorite} className="button">
             <span><ion-icon name="heart-sharp" /> Unfavorite</span></button>
@@ -515,9 +499,9 @@
 
       function renderView(store) {
         ReactDOM.render(
-          <StoreContext.Provider value={store}>
+          <ReactRedux.Provider store={store}>
              <App />
-          </StoreContext.Provider>,
+          </ReactRedux.Provider>,
           document.getElementById('root')
         )
       }
