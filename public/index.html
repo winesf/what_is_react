@@ -8,8 +8,8 @@
     <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
 <!--    Babel library-->
-    <script src="https://unpkg.com/babel-standalone@6/babel.js"></script>
-<!--    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>-->
+<!--    <script src="https://unpkg.com/babel-standalone@6/babel.js"></script>-->
+    <script src="https://unpkg.com/@babel/standalone@7.12.6/babel.js"></script>
     <script src="https://unpkg.com/redux@4/dist/redux.js"></script>
     <script src="https://unpkg.com/react-redux@7/dist/react-redux.js"></script>
     <script src="https://unpkg.com/redux-thunk@2/dist/redux-thunk.js"></script>
@@ -208,7 +208,7 @@
         return (
           <div className="app">
             <Header menu={{hello:'world'}} />
-            <ClockContainer />
+            <ClockContainerHook  />
             <CardsConnected  />
             <CardsTableConnect />
           </div>
@@ -239,30 +239,48 @@
        }
 
 
-     class ClockContainer extends React.Component {
-        constructor(props) {
-          super(props);
-          this.state = {
-           date: new Date()
-          }
-          this.tick = this.tick.bind(this)
-        }
-        tick() {
-          this.setState({
-            date: new Date()
-          })
-        }
+     // class ClockContainer extends React.Component {
+     //    constructor(props) {
+     //      super(props);
+     //      this.state = {
+     //       date: new Date()
+     //      }
+     //      this.tick = this.tick.bind(this)
+     //    }
+     //    tick() {
+     //      this.setState({
+     //        date: new Date()
+     //      })
+     //    }
+     //
+     //    componentDidMount () {
+     //      this.interval = setInterval(this.tick, 1000)
+     //    }
+     //
+     //    componentWillUnmount () {
+     //      clearInterval(this.interval)
+     //    }
+     //   render() {
+     //    return <Clock date={this.state.date} />
+     //   }
+     // }
+     function ClockContainerHook ({period}) {
+        const [date, setTime] = React.useState(new Date())
 
-        componentDidMount () {
-          this.interval = setInterval(this.tick, 1000)
-        }
+       const tick = () => {setTime(new Date())}
 
-        componentWillUnmount () {
-          clearInterval(this.interval)
-        }
-       render() {
-        return <Clock date={this.state.date} />
-       }
+       React.useEffect(() => {
+        const interval = setInterval(
+          () => {
+          setTime(new Date())
+            console.log('Я  в работе')
+          },1000
+        )
+
+         return () => clearInterval(interval)
+       } ,[setTime])
+
+       return <Clock date={date}  />
      }
 
      function Clock ({date}) {
