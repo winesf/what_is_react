@@ -56,7 +56,7 @@
               throw new Error('Ooopss')
           }
         },
-       post (url)  {
+       post(url)  {
           if (/^\/cards\/(\d+)\/favorite$/.exec(url)) {
             return new Promise((resolve) => {
               setTimeout(() => {
@@ -78,7 +78,7 @@
         subscribe(channel, listener) {
           const match = /price-(\d+)/.exec(channel)
           if (match) {
-            setInterval(() => {
+            const test = setInterval(() => {
               listener({
                 id: parseInt(match[1]),
                 price: Math.round((Math.random() * 10 + 30))
@@ -179,7 +179,7 @@
 
       // #############Store##################
       function favoriteAsync (id) {
-        return (dispatch,getState, api) => {
+        return (dispatch,getState, {api}) => {
           api.post(`/cards/${id}/favorite`).then(() => {
             dispatch(favoriteCard(id))
           })
@@ -198,7 +198,7 @@
         Redux.combineReducers({
         auction: auctionReducer
       }),
-      Redux.applyMiddleware(thunk.withExtraArgument({ api }))
+      Redux.applyMiddleware(thunk.withExtraArgument({ api, stream }))
       )
 
       // #############View##################
@@ -308,8 +308,14 @@
       }
 
 
-      function Cards ({ cards }) {
-        if (cards === null) {
+      function Cards ({ cards,loaded, load }) {
+        React.useEffect(() => {
+          if (!loaded) {
+            load()
+          }
+        }, [loaded])
+
+        if (!loaded) {
             return <div className="cards">
               <Loading />
             </div>
@@ -322,11 +328,28 @@
           </div>
         )
        }
-      const cardsMapStateToProps = (state) => ({cards: state.auction.cards })
-      const CardsConnected = ReactRedux.connect(cardsMapStateToProps)(Cards)
+      const cardsMapStateToProps = (state) => ({
+        cards: state.auction.cards,
+        loaded: state.auction.cards !== null
+      })
+      const cardsMapDispatchToProps = {
+        load: () => {
+          return (dispatch, getstate, { api}) => {
+            api.get('/cards').then((cards) => {
+              dispatch(setCards(cards))
 
 
-        function Card ({card,  favorite ,unfavorite }) {
+            })
+          }
+        }
+      }
+      const CardsConnected = ReactRedux.connect(cardsMapStateToProps,cardsMapDispatchToProps)(Cards)
+
+
+        function Card ({card, subscribe, favorite ,unfavorite }) {
+        React.useEffect (() => {
+          subscribe(card.id)
+        }, [card.id])
         return <article   className={'card' + (card.favorite ? ' favorite' : '')} >
           <div className="image">
             <img src={card.img} alt={card.name}/>
@@ -343,7 +366,16 @@
           </div>
         </article>
       }
-      const cardMapDispatchToProps = {favorite: favoriteAsync , unfavorite: unfavoriteAsync}
+      const cardMapDispatchToProps = {
+        favorite: favoriteAsync ,
+        unfavorite: unfavoriteAsync,
+        subscribe: (id) => {
+          return (dispatch, getState, {stream}) => {
+            stream.subscribe(`price-${id}`, (data) => {
+              dispatch(changeCardPrice(data.id , data.price))
+            })
+          }
+        }}
       const CardConnected = ReactRedux.connect(null,cardMapDispatchToProps)(Card)
 
 
@@ -497,20 +529,6 @@
           </ReactRedux.Provider>,
           document.getElementById('root')
         )
-
-      //  ######Events########
-
-
-
-        api.get('/cards').then((cards) => {
-          store.dispatch(setCards(cards))
-
-          cards.forEach((card) => {
-            stream.subscribe(`price-${card.id}`, (data) => {
-              store.dispatch(changeCardPrice(data.id , data.price))
-            })
-          })
-        })
    </script>
 
 </body>
