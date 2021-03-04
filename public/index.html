@@ -79,7 +79,6 @@
           const match = /price-(\d+)/.exec(channel)
           if (match) {
             setInterval(() => {
-              console.log("смена цен")
               listener({
                 id: parseInt(match[1]),
                 price: Math.round((Math.random() * 10 + 30))
@@ -89,22 +88,7 @@
         }
       }
       // ########Store####
-      const SET_TIME = 'SET_TIME'
 
-      const clockInitialState = {
-        date: new Date()
-      }
-      function clockReducer(state = clockInitialState, action) {
-        switch (action.type) {
-          case SET_TIME:
-            return {
-              ...state,
-              date: action.date
-            }
-          default:
-            return state
-        }
-      }
 
       const SET_CARDS = 'SET_CARDS'
       const CHANGE_CARD_PRICE = 'CHANGE_CARD_PRICE'
@@ -165,13 +149,7 @@
         }
       }
 
-      //Action creator
-      function setTime(date) {
-        return {
-          type: SET_TIME,
-          date
-        }
-      }
+
 
       function setCards(cards) {
         return   {
@@ -214,21 +192,10 @@
           })
         }
       }
-     // function functionalActionSupport ({ dispatch }) {
-     //    return function (next) {
-     //      return function (action) {
-     //        if (typeof  action === 'function') {
-     //          return action(dispatch)
-     //        }
-     //        return next(action);
-     //      }
-     //    }
-     // }
 
      const thunk = ReduxThunk.default
       const store = Redux.createStore(
         Redux.combineReducers({
-        clock: clockReducer,
         auction: auctionReducer
       }),
       Redux.applyMiddleware(thunk.withExtraArgument({ api }))
@@ -241,7 +208,7 @@
         return (
           <div className="app">
             <Header menu={{hello:'world'}} />
-            <ClockConnected />
+            <ClockContainer />
             <CardsConnected  />
             <CardsTableConnect />
           </div>
@@ -272,17 +239,42 @@
        }
 
 
-     class Clock extends React.Component {
+     class ClockContainer extends React.Component {
+        constructor(props) {
+          super(props);
+          this.state = {
+           date: new Date()
+          }
+          this.tick = this.tick.bind(this)
+        }
+        tick() {
+          this.setState({
+            date: new Date()
+          })
+        }
+
+        componentDidMount () {
+          this.interval = setInterval(this.tick, 1000)
+        }
+
+        componentWillUnmount () {
+          clearInterval(this.interval)
+        }
        render() {
-         return (
-           <div className="clock">
-             <span className="value" children={this.props.date.toLocaleTimeString()}></span>
-           </div>
-         )
+        return <Clock date={this.state.date} />
        }
      }
-      const clockMapStateToProps = (state) => ({date:state.clock.date})
-      const ClockConnected = ReactRedux.connect(clockMapStateToProps)(Clock)
+
+     function Clock ({date}) {
+       const isDay = date.getHours() >=7 && date.getHours() <=21
+       return (
+         <div className="clock" >
+           {date.toLocaleTimeString()}
+           <span className={isDay ? 'icon day' : 'icon night'} ></span>
+         </div>
+       )
+     }
+
 
       function Loading () {
         return <div className="card is-loading">
@@ -371,22 +363,6 @@
           </table>
         )
       } const CardsTableConnect = ReactRedux.connect(cardsMapStateToProps, cardMapDispatchToProps)(CardTable)
-     // const cardMapDispatchToProps = (dispatch) => ({
-     //     favorite: (id) => {
-     //       api.post(`/cards/${id}/favorite`).then(() => {
-     //         dispatch(favoriteCard(id))
-     //       })
-     //     },
-     //     unfavorite: (id) => {
-     //       api.post(`/cards/${id}/unfavorite`).then(() => {
-     //         dispatch(unfavoriteCard(id))
-     //       })
-     //   }
-     // })
-
-
-
-
 
       function FavoriteBtn ({ active, unfavorite, favorite  }) {
         return active
@@ -497,25 +473,15 @@
       }
 // #################
 
-      function renderView(store) {
         ReactDOM.render(
           <ReactRedux.Provider store={store}>
              <App />
           </ReactRedux.Provider>,
           document.getElementById('root')
         )
-      }
-
-     const unsubscribe = store.subscribe(() => {
-        renderView(store)
-      })
-
-      renderView(store)
 
       //  ######Events########
-      setInterval(() => {
-       store.dispatch(setTime(new Date()))
-      }, 1000)
+
 
 
         api.get('/cards').then((cards) => {
